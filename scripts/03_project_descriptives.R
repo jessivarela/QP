@@ -16,10 +16,17 @@ source(here::here("scripts", "00_load_libs.R"))
 
 # Load .csv file from google drive
 
-jessiv_allinfo <- read.csv(here("data", "raw", "pupurri_demographics.csv"))
+jessiv_allinfo <- read.csv(here("data", "raw", "demographics_original_V1.csv"))
 
-glimpse(jessiv_allinfo)
+# Clean df
 
+jessiv_allinfo <- jessiv_allinfo[-1, ]
+
+jessiv_allinfo <- select(jessiv_allinfo, ID, group, handedness, country_born, age_immigrate_US, DELE, age, gender, AoA_L2, en_pc_week, es_pc_week, mom.school)
+
+jessiv_allinfo <- jessiv_allinfo[!is.na(jessiv_allinfo$age),]
+  
+ 
 #####
 # Participants per group
 
@@ -31,7 +38,7 @@ jessiv_allinfo %>%
 # Females per group
 
 jessiv_allinfo %>%
-  filter(., sex == "female") %>%
+  filter(., gender == "female") %>%
   group_by(., group) %>%
   summarise(., n_females = n())
 
@@ -45,80 +52,90 @@ jessiv_allinfo %>%
             mean_age = round(mean(age),2),
             sd_age = round(sd(age),2)) %>% knitr::kable()
 
-jessiv_allinfo$DELE <- as.numeric(as.character(jessiv_allinfo$DELE))
-glimpse(jessiv_allinfo)
 
-jessiv_allinfo %>%
-  filter(., group %in% c("ahs", "ihs")) %>%
+# DELE
+jessiv_allinfo$DELE <- as.numeric(as.character(jessiv_allinfo$DELE))
+
+jessiv_allinfo[!is.na(jessiv_allinfo$DELE),] %>%
   group_by(., group) %>%
   summarise(mean_DELE = mean(DELE),
             sd_DELE = sd(DELE))
 
 #################################
-# Get mean L2 AoA as a function of group + SD
+# Get mean L2 AoA as a function of group + SD (L2 here is English)
 
 jessiv_allinfo$AoA_L2 <- as.numeric(as.character(jessiv_allinfo$AoA_L2))
-glimpse(jessiv_allinfo)
 
-jessiv_allinfo %>%
-  filter(., group %in% c("ahs", "ihs")) %>%
+
+jessiv_allinfo[!is.na(jessiv_allinfo$AoA_L2),] %>%
   group_by(., group) %>%
   summarise(mean_AoA_L2 = mean(AoA_L2),
             sd_AoA_L2 = sd(AoA_L2))
 
-#####
-# oldest sibling
 
-jessiv_allinfo %>%
-  filter(., oldest.sibling. == "yes") %>%
-  group_by(., group) %>%
-  summarise(., n_yes = n())
+# #####
+# # oldest sibling
+# 
+# jessiv_allinfo %>%
+#   filter(., oldest.sibling. == "yes") %>%
+#   group_by(., group) %>%
+#   summarise(., n_yes = n())
 
 #################################
 # Get mean percentage of English use in a week as a function of group + SD
 
-jessiv_allinfo$perc_week_Eng <- as.numeric(as.character(jessiv_allinfo$perc_week_Eng))
-glimpse(jessiv_allinfo)
+jessiv_allinfo$en_pc_week <- as.numeric(as.character(jessiv_allinfo$en_pc_week))
 
 jessiv_allinfo %>%
-  filter(., group %in% c("ahs", "ihs")) %>%
+#  filter(., group %in% c("ahs", "ihs")) %>%
   group_by(., group) %>%
-  summarise(mean_perc_week_Eng = mean(perc_week_Eng),
-            sd_perc_week_Eng = sd(perc_week_Eng))
+  summarise(mean_perc_week_Eng = mean(en_pc_week),
+            sd_perc_week_Eng = sd(en_pc_week))
 
 
 #################################
 # Get mean percentage of Spanish use in a week as a function of group + SD
 
-jessiv_allinfo$perc_week_Spa <- as.numeric(as.character(jessiv_allinfo$perc_week_Spa))
-glimpse(jessiv_allinfo)
+jessiv_allinfo$es_pc_week <- as.numeric(as.character(jessiv_allinfo$es_pc_week))
 
 jessiv_allinfo %>%
-  filter(., group %in% c("ahs", "ihs")) %>%
   group_by(., group) %>%
-  summarise(mean_perc_week_Spa = mean(perc_week_Spa),
-            sd_perc_week_Spa = sd(perc_week_Spa))
+  summarise(mean_perc_week_Spa = mean(es_pc_week),
+            sd_perc_week_Spa = sd(es_pc_week))
 
 #####
-# like Reading per group
+
+# Country where participants were born, and if abroad, when they immigrated to US
 
 jessiv_allinfo %>%
-  filter(., like_reading == "yes") %>%
-  group_by(., group) %>%
-  summarise(., n_yes = n())
+  count(country_born)
+
+jessiv_allinfo %>%
+  filter(., country_born != 'US') %>%
+  count(age_immigrate_US)
 
 #####
 # handedness per group
 
-jessiv_allinfo %>%
-  filter(., handedness == "right") %>%
-  group_by(., group) %>%
-  summarise(., n_right = n())
+jessiv_allinfo$handedness <- trimws(jessiv_allinfo$handedness, which = c("right"))
+jessiv_allinfo$handedness <- as.factor(jessiv_allinfo$handedness)
 
 jessiv_allinfo %>%
-  filter(., handedness == "left") %>%
   group_by(., group) %>%
-  summarise(., n_left = n())
+  count(handedness)
+
+
+#####
+# # like Reading per group
+# 
+# jessiv_allinfo %>%
+#   filter(., like_reading == "yes") %>%
+#   group_by(., group) %>%
+#   summarise(., n_yes = n())
+
+
+
+
 
 
 
