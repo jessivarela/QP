@@ -134,8 +134,19 @@ jessiv_allinfo %>%
 #   summarise(., n_yes = n())
 
 
+#Table for Manuscript - need to finish 
 
-
-
+jessiv_allinfo %>%
+  #  filter(., group %in% c("ahs", "ihs")) %>%
+  group_by(., group) %>%
+  summarise(mean_perc_week_Eng = mean(en_pc_week),
+            sd_perc_week_Eng = sd(en_pc_week),
+            mean_AoA_L2 = mean(AoA_L2),
+            sd_AoA_L2 = sd(AoA_L2), 
+            mean_perc_week_Spa = mean(es_pc_week),
+            sd_perc_week_Spa = sd(es_pc_week),
+            mean_DELE = mean(DELE),
+            sd_DELE = sd(DELE))
+            
 
 
