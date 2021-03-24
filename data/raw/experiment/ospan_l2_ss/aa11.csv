@@ -1,2 +1,3 @@
-,subject_id,date,handedness,lang,trial_num,sequence,seq_length,formula,correct_resp,subj_form_resp,accuracy_formula,rt_formula
-0,aa11,2020/02/22 11:29:58,right,en,NA,haircut,NA,1+1=0,0,0,1,0.6099217449664138
+version https://git-lfs.github.com/spec/v1
+oid sha256:fa00fb6385bcbba6869753676061ed44e489a769b67e1e15f3b23b7cf08946ea
+size 208
