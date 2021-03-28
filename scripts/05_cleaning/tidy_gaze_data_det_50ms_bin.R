@@ -11,7 +11,6 @@
 # Source libs -----------------------------------------------------------------
 
 source(here::here("scripts", "00_load_libs.R"))
-library(plyr)
 library(readr)
 
 # -----------------------------------------------------------------------------
@@ -83,13 +82,13 @@ det50 <- merge(x = det50, y = dem, by = "participant", all.x=TRUE)
 
 # Load processing speed info
 ospan_en_hs = list.files(path="./data/raw/experiment/ospan_en/", pattern="*.csv", full.names=TRUE)
-ospan_en_hs = ldply(ospan_en_hs, read_csv)
+ospan_en_hs = plyr::ldply(ospan_en_hs, read_csv)
 
 ospan_es_hs = list.files(path="./data/raw/experiment/ospan_es/", pattern="*.csv", full.names=TRUE)
-ospan_es_hs = ldply(ospan_es_hs, read_csv)
+ospan_es_hs = plyr::ldply(ospan_es_hs, read_csv)
 
 ospan_l2_ss = list.files(path="./data/raw/experiment/ospan_l2_ss/", pattern="*.csv", full.names=TRUE)
-ospan_l2_ss = ldply(ospan_l2_ss, read_csv)
+ospan_l2_ss = plyr::ldply(ospan_l2_ss, read_csv)
 
 ospan_en_hs <- ospan_en_hs %>%
   select(., -X1, -trial_num, -date, -handedness) %>%
@@ -148,9 +147,5 @@ det50 <- merge(x = det50, y = ospan_ranef, by.x = "participant", by.y = "partici
 det50 <- det50[!is.na(det50$group), ]
 
 write_csv(det50, here::here("data", "clean", "det_50ms_onset_target.csv"))
-
-
-# change name of .csv if trigger checked different
-write_csv(stress50, here("data", "clean", "det_50ms_onset_target.csv"))
 
 # -----------------------------------------------------------------------------
