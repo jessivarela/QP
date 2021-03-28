@@ -308,6 +308,60 @@ struc_wmen_anova <-
 # gca_mod_struc_wmen_2     47 413170 413603 -206538   413076   0.0000  1     1.0000    
 # gca_mod_struc_wmen_3     48 412971 413413 -206438   412875 201.1089  1     <2e-16 ***
 
+
+# add interactions
+gca_mod_int_struc_en_0 <- update(gca_mod_struc_wmen_3,     . ~ . + AoA_sum:prof_z:structure_sum:gender_sum:wmen_z)
+gca_mod_int_struc_en_1 <- update(gca_mod_int_struc_en_0,   . ~ . + ot1:AoA_sum:prof_z:structure_sum:gender_sum:wmen_z)
+gca_mod_int_struc_en_2 <- update(gca_mod_int_struc_en_1,   . ~ . + ot2:AoA_sum:prof_z:structure_sum:gender_sum:wmen_z)
+gca_mod_int_struc_en_3 <- update(gca_mod_int_struc_en_2,   . ~ . + ot3:AoA_sum:prof_z:structure_sum:gender_sum:wmen_z)
+
+int_structure_en_anova <-
+  anova(gca_mod_struc_wmen_3, gca_mod_int_struc_en_0, gca_mod_int_struc_en_1,
+        gca_mod_int_struc_en_2, gca_mod_int_struc_en_3)
+#                        npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)  
+# gca_mod_struc_wmen_3     48 412971 413413 -206438   412875                       
+# gca_mod_int_struc_en_0   49 412967 413418 -206434   412869 6.4681  1    0.01098 *
+# gca_mod_int_struc_en_1   50 412967 413428 -206434   412867 1.5456  1    0.21379  
+# gca_mod_int_struc_en_2   51 412969 413439 -206434   412867 0.1218  1    0.72714  
+# gca_mod_int_struc_en_3   52 413171 413649 -206533   413067 0.0000  1    1.00000
+
+
+
+
+## ROUTE 2.B.
+# add wm ES
+gca_mod_struc_wmes_0 <- update(gca_mod_struc_gender_3, . ~ . + wmes_z) 
+gca_mod_struc_wmes_1 <- update(gca_mod_struc_wmes_0,   . ~ . + ot1:wmes_z) 
+gca_mod_struc_wmes_2 <- update(gca_mod_struc_wmes_1,   . ~ . + ot2:wmes_z) 
+gca_mod_struc_wmes_3 <- update(gca_mod_struc_wmes_2,   . ~ . + ot3:wmes_z) 
+
+struc_wmes_anova <-
+  anova(gca_mod_struc_gender_3, gca_mod_struc_wmes_0, gca_mod_struc_wmes_1,
+        gca_mod_struc_wmes_2, gca_mod_struc_wmes_3)
+#                        npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)  
+# gca_mod_struc_gender_3   44 412968 413373 -206440   412880                       
+# gca_mod_struc_wmes_0     45 412968 413383 -206439   412878 1.5640  1    0.21109  
+# gca_mod_struc_wmes_1     46 412965 413389 -206437   412873 4.9447  1    0.02617 *
+# gca_mod_struc_wmes_2     47 412964 413397 -206435   412870 3.1541  1    0.07574 .
+# gca_mod_struc_wmes_3     48 412966 413407 -206435   412870 0.6075  1    0.43573  
+
+# add interactions
+gca_mod_int_struc_es_0 <- update(gca_mod_struc_wmes_1,     . ~ . + AoA_sum:prof_z:structure_sum:gender_sum:wmes_z)
+gca_mod_int_struc_es_1 <- update(gca_mod_int_struc_es_0,   . ~ . + ot1:AoA_sum:prof_z:structure_sum:gender_sum:wmes_z)
+gca_mod_int_struc_es_2 <- update(gca_mod_int_struc_es_1,   . ~ . + ot2:AoA_sum:prof_z:structure_sum:gender_sum:wmes_z)
+gca_mod_int_struc_es_3 <- update(gca_mod_int_struc_es_2,   . ~ . + ot3:AoA_sum:prof_z:structure_sum:gender_sum:wmes_z)
+
+int_structure_es_anova <-
+  anova(gca_mod_struc_wmes_1, gca_mod_int_struc_es_0, gca_mod_int_struc_es_1,
+        gca_mod_int_struc_es_2, gca_mod_int_struc_es_3)
+#                        npar    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)
+# gca_mod_struc_wmes_1     46 412965 413389 -206437   412873                     
+# gca_mod_int_struc_es_0   47 412967 413400 -206437   412873 0.0341  1     0.8534
+# gca_mod_int_struc_es_1   48 412967 413409 -206435   412871 2.3482  1     0.1254
+# gca_mod_int_struc_es_2   49 412969 413420 -206435   412871 0.0036  1     0.9521
+# gca_mod_int_struc_es_3   50 412970 413430 -206435   412870 0.8591  1     0.3540
+
+
 mod_type <- "gca_mod"
 mod_spec <- c('_base', 
               "_AoA_0", "_AoA_1", "_AoA_2", "_AoA_3", 
@@ -321,8 +375,11 @@ mod_spec <- c('_base',
               "_struc_0", "_struc_1", "_struc_2", "_struc_3",
               "_struc_gender_0", "_struc_gender_1", "_struc_gender_2", "_struc_gender_3",
               "_struc_wmen_0", "_struc_wmen_1", "_struc_wmen_2", "_struc_wmen_3",
+              "_struc_wmes_0", "_struc_wmes_1", "_struc_wmes_2", "_struc_wmes_3",
               "_int_trans_0", "_int_trans_1", "_int_trans_2", "_int_trans_3",
-              "_int_struc_0", "_int_struc_1", "_int_struc_2", "_int_struc_3"
+              "_int_struc_0", "_int_struc_1", "_int_struc_2", "_int_struc_3",
+              "_int_struc_en_0", "_int_struc_en_1", "_int_struc_en_2", "_int_struc_en_3",
+              "_int_struc_es_0", "_int_struc_es_1", "_int_struc_es_2", "_int_struc_es_3"
 )
 
 
@@ -338,140 +395,122 @@ save(gca_mods,
 nested_model_comparisons <-
   mget(c("AoA_anova", "prof_anova", "trans_anova", "int_transparency_anova", "trans_gender_anova",
          "trans_wmen_anova", "trans_wmes_anova", "int_transparency_en_anova", "int_transparency_es_anova",
-         "struc_anova", "int_structure_anova", "struc_gender_anova", "struc_wmen_anova"))
+         "struc_anova", "int_structure_anova", "struc_gender_anova", "struc_wmen_anova", 
+         "struc_wmes_anova", "int_structure_en_anova", "int_structure_es_anova"))
 
 save(nested_model_comparisons,
      file = here("mods", "gca", 
                  "nested_model_comparisons.Rdata"))
 
 
-
-
-
-
-# add interactions
-gca_mod_int_struc_en_0 <- update(gca_mod_struc_wmen_3,     . ~ . + AoA_sum:prof_z:structure_sum:gender_sum:wmen_z)
-gca_mod_int_struc_en_1 <- update(gca_mod_int_struc_en_0,   . ~ . + ot1:AoA_sum:prof_z:structure_sum:gender_sum:wmen_z)
-gca_mod_int_struc_en_2 <- update(gca_mod_int_struc_en_1,   . ~ . + ot2:AoA_sum:prof_z:structure_sum:gender_sum:wmen_z)
-gca_mod_int_struc_en_3 <- update(gca_mod_int_struc_en_2,   . ~ . + ot3:AoA_sum:prof_z:structure_sum:gender_sum:wmen_z)
-
-int_structure_en_anova <-
-  anova(gca_mod_struc_wmen_3, gca_mod_int_struc_en_0, gca_mod_int_struc_en_1,
-        gca_mod_int_struc_en_2, gca_mod_int_struc_en_3)
-
-
-
-## ROUTE 2.B.
-# add wm ES
-gca_mod_struc_wmes_0 <- update(gca_mod_struc_gender_3, . ~ . + wmes_z) 
-gca_mod_struc_wmes_1 <- update(gca_mod_struc_wmes_0,   . ~ . + ot1:wmes_z) 
-gca_mod_struc_wmes_2 <- update(gca_mod_struc_wmes_1,   . ~ . + ot2:wmes_z) 
-gca_mod_struc_wmes_3 <- update(gca_mod_struc_wmes_2,   . ~ . + ot3:wmes_z) 
-
-struc_wmes_anova <-
-  anova(gca_mod_struc_gender_3, gca_mod_struc_wmes_0, gca_mod_struc_wmes_1,
-        gca_mod_struc_wmes_2, gca_mod_struc_wmes_3)
-
-# add interactions
-gca_mod_int_struc_es_0 <- update(gca_mod_,   . ~ . + AoA_sum:prof_z:structure_sum:gender_sum:wmes_z)
-gca_mod_int_struc_es_1 <- update(gca_mod_int_struc_en_0,   . ~ . + ot1:AoA_sum:prof_z:structure_sum:gender_sum:wmes_z)
-gca_mod_int_struc_es_2 <- update(gca_mod_int_struc_en_1,   . ~ . + ot2:AoA_sum:prof_z:structure_sum:gender_sum:wmes_z)
-gca_mod_int_struc_es_3 <- update(gca_mod_int_struc_en_2,   . ~ . + ot3:AoA_sum:prof_z:structure_sum:gender_sum:wmes_z)
-
-int_structure_es_anova <-
-  anova(gca_mod_, gca_mod_int_struc_es_0, gca_mod_int_struc_es_1,
-        gca_mod_int_struc_es_2, gca_mod_int_struc_es_3)
-
-
-
 # Model predictions for plotting ---------------------------------------------
 
 # Create design dataframe for predictions
-new_dat_mon <- mon_data %>%
-  dplyr::select(time_zero, ot1:ot3, condition_sum) %>% #, ospan
+new_data <- det_gc_subset %>%
+  dplyr::select(time_zero, ot1:ot3, noun_sum, structure_sum, AoA_sum, 
+                prof_z, wmes_z, wmen_z, gender_sum) %>% 
   distinct
 
-new_dat_l2 <- l2_data %>%
-  dplyr::select(l1, time_zero, ot1:ot3, condition_sum, ospan, DELE_z, use_z) %>%
-  distinct
+# write_csv(new_dat_l2, here::here('new_dat_l2.csv'))
+# new_dat_l2 <- read_csv(here::here('new_dat_l2.csv'))
 
-write_csv(new_dat_l2, here::here('new_dat_l2.csv'))
-new_dat_l2 <- read_csv(here::here('new_dat_l2.csv'))
 
-# Get model predictions and SE
-fits_all_mon <- predictSE(gca_mod_mon_base, new_dat_mon) %>%  
+
+############ Transparency + wm EN
+
+# Get model predictions and SE 
+fits_all_transEN <- predictSE(gca_mod_int_trans_en_3, new_data) %>%  
   as_tibble %>%
-  bind_cols(new_dat_mon) %>%
+  bind_cols(new_data) %>%
   rename(se = se.fit) %>%
   mutate(ymin = fit - se, ymax = fit + se)
 
-fits_all_l2_dele <- predictSE(gca_l2_mod_dele_final, new_dat_l2) %>%
-  as_tibble %>%
-  bind_cols(new_dat_l2) %>%
-  rename(se = se.fit) %>%
-  mutate(ymin = fit - se, ymax = fit + se,
-         l1 = fct_recode(l1, EN = "en", MA = "ma"),
-         l1 = fct_relevel(l1, "EN", "MA"))
-
-fits_all_l2_use <- predictSE(gca_l2_mod_use_final, new_dat_l2) %>%  
-  as_tibble %>%
-  bind_cols(new_dat_l2) %>%
-  rename(se = se.fit) %>%
-  mutate(ymin = fit - se, ymax = fit + se,
-         l1 = fct_recode(l1, EN = "en", MA = "ma"),
-         l1 = fct_relevel(l1, "EN", "MA"))
-
-fits_all_l2_wm <- predictSE(gca_l2_mod_wm_final, new_dat_l2) %>%  
-  as_tibble %>%
-  bind_cols(new_dat_l2) %>%
-  rename(se = se.fit) %>%
-  mutate(ymin = fit - se, ymax = fit + se,
-         group = fct_recode(l1, EN = "en", MA = "ma"),
-         group = fct_relevel(l1, "EN", "MA"))
 
 # Filter preds at target syllable offset
-target_offset_preds_mon <- filter(fits_all_mon, time_zero == 4) %>%
-  select(stress = condition_sum, #ospan,
+target_onset_preds_transEN <- filter(fits_all_transEN, time_zero == 4) %>%
+  select(noun_transparency = noun_sum,
+         AoA = AoA_sum, 
+         proficiency = prof_z, 
+         wm_english = wmen_z, 
+         noun_gender = gender_sum,
          elog = fit, elog_lb = ymin, elog_ub = ymax) %>%
   mutate(prob = plogis(elog),
          prob_lb = plogis(elog_lb),
          prob_ub = plogis(elog_ub)) 
 
-target_offset_preds_l2_dele <- filter(fits_all_l2_dele, time_zero == 4) %>%
-  select(l1, stress = condition_sum, DELE = DELE_z,
-         elog = fit, elog_lb = ymin, elog_ub = ymax) %>%
-  mutate(prob = plogis(elog),
-         prob_lb = plogis(elog_lb),
-         prob_ub = plogis(elog_ub)) %>%
-  arrange(l1)
 
-target_offset_preds_l2_use <- filter(fits_all_l2_use, time_zero == 4) %>%
-  select(l1, stress = condition_sum, percent_l2_week = use_z,
-         elog = fit, elog_lb = ymin, elog_ub = ymax) %>%
-  mutate(prob = plogis(elog),
-         prob_lb = plogis(elog_lb),
-         prob_ub = plogis(elog_ub)) %>%
-  arrange(l1)
+############Transparency + wm ES
 
-target_offset_preds_l2_wm <- filter(fits_all_l2_wm, time_zero == 4) %>%
-  select(l1, stress = condition_sum, wm = ospan,
+# Get model predictions and SE 
+fits_all_transES <- predictSE(gca_mod_int_trans_es_3, new_data) %>%  
+  as_tibble %>%
+  bind_cols(new_data) %>%
+  rename(se = se.fit) %>%
+  mutate(ymin = fit - se, ymax = fit + se)
+
+# Filter preds at target syllable offset
+target_onset_preds_transES <- filter(fits_all_transES, time_zero == 4) %>%
+  select(noun_transparency = noun_sum,
+         AoA = AoA_sum, 
+         proficiency = prof_z, 
+         wm_spanish = wmes_z, 
+         noun_gender = gender_sum,
          elog = fit, elog_lb = ymin, elog_ub = ymax) %>%
   mutate(prob = plogis(elog),
          prob_lb = plogis(elog_lb),
-         prob_ub = plogis(elog_ub)) %>%
-  arrange(l1)
+         prob_ub = plogis(elog_ub)) 
+
+############Phrase structure + wm EN
+
+# Get model predictions and SE 
+fits_all_strucEN <- predictSE(gca_mod_int_struc_en_0, new_data) %>%  
+  as_tibble %>%
+  bind_cols(new_data) %>%
+  rename(se = se.fit) %>%
+  mutate(ymin = fit - se, ymax = fit + se)
+
+# Filter preds at target syllable offset
+target_onset_preds_strucEN <- filter(fits_all_strucEN, time_zero == 4) %>%
+  select(phrase_structure = structure_sum,
+         AoA = AoA_sum, 
+         proficiency = prof_z, 
+         wm_english = wmen_z, 
+         noun_gender = gender_sum,
+         elog = fit, elog_lb = ymin, elog_ub = ymax) %>%
+  mutate(prob = plogis(elog),
+         prob_lb = plogis(elog_lb),
+         prob_ub = plogis(elog_ub)) 
+
+############Phrase structure + wm ES
+
+# Get model predictions and SE 
+fits_all_strucES <- predictSE(gca_mod_struc_wmes_1, new_data) %>%  
+  as_tibble %>%
+  bind_cols(new_data) %>%
+  rename(se = se.fit) %>%
+  mutate(ymin = fit - se, ymax = fit + se)
+
+# Filter preds at target syllable offset
+target_onset_preds_strucES <- filter(fits_all_strucES, time_zero == 4) %>%
+  select(phrase_structure = structure_sum,
+         AoA = AoA_sum, 
+         proficiency = prof_z, 
+         wm_spanish = wmes_z, 
+         noun_gender = gender_sum,
+         elog = fit, elog_lb = ymin, elog_ub = ymax) %>%
+  mutate(prob = plogis(elog),
+         prob_lb = plogis(elog_lb),
+         prob_ub = plogis(elog_ub)) 
+
 
 # Save models predictions
-model_preds <- mget(c("fits_all_mon", "fits_all_l2_dele", "fits_all_l2_use", "fits_all_l2_wm",
-                      "target_offset_preds_mon", "target_offset_preds_l2_dele",
-                      "target_offset_preds_l2_use", "target_offset_preds_l2_wm"))
+model_preds <- mget(c("fits_all_transEN", "fits_all_transES", "fits_all_strucEN", "fits_all_strucES",
+                      "target_onset_preds_transEN", "target_onset_preds_transES",
+                      "target_onset_preds_strucEN", "target_onset_preds_strucES"))
 
 save(model_preds,
-     file = here("mods", "stress", "gca",
+     file = here("mods", "gca",
                  "model_preds.Rdata"))
-
-# MON without WM score
-saveRDS(target_offset_preds_mon, file = here("mods", "stress", "gca", "model_preds_mon.Rdata"))
 
 # -----------------------------------------------------------------------------
 
