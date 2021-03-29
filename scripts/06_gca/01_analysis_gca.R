@@ -1,6 +1,21 @@
 
-
+source(here::here("scripts", "00_load_libs.R"))
 source(here::here("scripts", "02_load_data.R"))
+
+
+# --------------------------------------------------------------------------
+
+# Load models as list and store full mod to global env
+load(paste0(gca_mods_path, "/gca_mods.Rdata"))
+load(paste0(gca_mods_path, "/nested_model_comparisons.Rdata"))
+load(paste0(gca_mods_path, "/model_preds.Rdata"))
+list2env(gca_mods, globalenv())
+list2env(nested_model_comparisons, globalenv())
+list2env(model_preds, globalenv())
+
+
+
+# --------------------------------------------------------------------------
  
 wm_df <- select(wm_df, -group)
 
@@ -20,6 +35,8 @@ det_gc_subset <- det50 %>%
          AoA_sum = if_else(group != 'l2', 1, -1)) %>%      
   poly_add_columns(., time_zero, degree = 3, prefix = "ot")
 
+
+# write_csv(det_gc_subset, here::here("data", "det_50_gca_target_onset.csv"))
 
 # -----------------------------------------------------------------------------
 

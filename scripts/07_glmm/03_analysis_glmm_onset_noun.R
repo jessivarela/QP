@@ -20,14 +20,16 @@
 
 source(here::here("scripts", "00_load_libs.R"))
 # source(here::here("scripts", "02_load_data.R"))
-det10que <- read_csv(here::here("data", 'clean', 'det_10ms_onset_que.csv'))
+det10noun <- read_csv(here::here("data", 'clean', 'det_10ms_onset_noun.csv'))
 
-# Final model for noun transparency with either WM score
-glmm_que_trans <- readRDS(here("mods", "glmm", "onset_que", "glmm_trans.rds"))
-# Final model for phrase structure with EN WM score in HS
-glmm_que_struc_en <- readRDS(here("mods", "glmm", "onset_que", "glmm_struc_int_en.rds"))
-# Final model for phrase structure with ES WM score in HS
-glmm_que_struc_es <- readRDS(here("mods", "glmm", "onset_que", "glmm_struc_int_es.rds"))
+# Final model for noun transparency with EN WM score
+glmm_noun_trans_en <- readRDS(here("mods", "glmm", "onset_noun", "glmm_trans_int_en.rds"))
+# Final model for noun transparency with ES WM score
+glmm_noun_trans_es <- readRDS(here("mods", "glmm", "onset_noun", "glmm_trans_int_es.rds"))
+# Final model for phrase structure with EN WM score
+glmm_noun_struc_en <- readRDS(here("mods", "glmm", "onset_noun", "glmm_struc_int_en.rds"))
+# Final model for phrase structure with ES WM score
+glmm_noun_struc_es <- readRDS(here("mods", "glmm", "onset_noun", "glmm_struc_int_es.rds"))
 
 
 # -----------------------------------------------------------------------------
@@ -39,15 +41,18 @@ glmm_que_struc_es <- readRDS(here("mods", "glmm", "onset_que", "glmm_struc_int_e
 # Filter time course to offset of 1st syllable (time_zero == 20, to account for 200 ms to launch saccade)
 # Create sum coded fixed factors (condition)
 
-# Merge wm scores (from 03.wm)
-# wm_df <- select(wm_df, -group)
-det10que <- left_join(det10que, wm_df, by = "participant")
+# Merge wm scores 
 
-det10que <- na.omit(det10que)
+wm_df <- read_csv(here::here('data', 'clean', 'wm_scores.csv'))
+
+wm_df <- select(wm_df, -group)
+det10noun <- left_join(det10noun, wm_df, by = "participant")
+
+det10noun <- na.omit(det10noun)
 
 # det50 <- det50[!is.na(det50$group), ]
 
-df_10que <- det10que %>%
+df_10noun <- det10noun %>%
   filter(., time_zero == 20) %>%
   mutate(., group = fct_relevel(group, "ss", "hs", "l2"),
          noun_sum = if_else(noun_transparency == "transp", 1, -1),
@@ -70,41 +75,41 @@ if(F) {
   
   prop_0_ranefA <- glmer(cbind(target_count, 10 - target_count) ~ 1 +
                            (1 | participant),
-                         data = df_10que, family = 'binomial',                 
+                         data = df_10noun, family = 'binomial',                 
                          control = glmerControl(optimizer = 'bobyqa'))
   
   prop_0_ranefB <- glmer(cbind(target_count, 10 - target_count) ~ 1 +
                            (1 | participant) +
                            (1 | target),
-                         data = df_10que, family = 'binomial', 
+                         data = df_10noun, family = 'binomial', 
                          control = glmerControl(optimizer = 'bobyqa'))
   
   anova(prop_0_ranefA, prop_0_ranefB, refit = F)  # keep intercept for target
-  #                 Df    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)    
-  # prop_0_ranefA    2 56874 56887 -28435    56870                         
-  # prop_0_ranefB    3 56596 56615 -28295    56590 280.02  1  < 2.2e-16 ***
+  #                 Df   AIC   BIC logLik deviance  Chisq Df Pr(>Chisq)    
+  # prop_0_ranefA    2 57460 57473 -28728    57456                         
+  # prop_0_ranefB    3 57253 57273 -28624    57247 208.46  1  < 2.2e-16 ***
   
   prop_0_ranefC <- glmer(cbind(target_count, 10 - target_count) ~ 1 +
                            (1 + noun_sum | participant) +
                            (1 | target),
-                         data = df_10que, family = 'binomial', 
+                         data = df_10noun, family = 'binomial', 
                          control = glmerControl(optimizer = 'bobyqa'))
   
   anova(prop_0_ranefB, prop_0_ranefC, refit = F) # keep slope for noun transparency
-  #                 Df    AIC    BIC  logLik deviance  Chisq Df Pr(>Chisq)    
-  # prop_0_ranefB    3 56596 56615 -28295    56590                         
-  # prop_0_ranefC    5 56034 56066 -28012    56024 565.95  2  < 2.2e-16 ***
+  #                 Df  AIC    BIC logLik deviance  Chisq Df Pr(>Chisq)    
+  # prop_0_ranefB    3 57253 57273 -28624    57247                         
+  # prop_0_ranefC    5 56439 56471 -28214    56429 818.56  2  < 2.2e-16 ***
   
   prop_0_ranefD <- glmer(cbind(target_count, 10 - target_count) ~ 1 +
                            (1 + noun_sum + structure_sum | participant) +
                            (1 | target),
-                         data = df_10que, family = 'binomial', 
+                         data = df_10noun, family = 'binomial', 
                          control = glmerControl(optimizer = 'bobyqa'))
   
-  anova(prop_0_ranefC, prop_0_ranefD, refit = F) # keep slope for noun transparency
-  #               npar   AIC   BIC logLik deviance  Chisq Df Pr(>Chisq)    
-  # prop_0_ranefC    5 56034 56066 -28012    56024                         
-  # prop_0_ranefD    8 54781 54832 -27382    54765 1259.1  3  < 2.2e-16 ***
+  anova(prop_0_ranefC, prop_0_ranefD, refit = F) # keep slope for noun phrase structure
+  #               npar  AIC   BIC logLik deviance  Chisq Df Pr(>Chisq)    
+  # prop_0_ranefC    5 56439 56471 -28214    56429                         
+  # prop_0_ranefD    8 55537 55587 -27760    55521 908.42  3  < 2.2e-16 ***
   
   }
 
@@ -117,6 +122,7 @@ if(F) {
 # Test fixed effects ----------------------------------------------------------
 
 if(F) {
+  
   glmm_mod_0 <- prop_0_ranefD
   
   glmm_mod_AoA  <- update(glmm_mod_0,    . ~ . + AoA_sum)
@@ -127,74 +133,71 @@ if(F) {
   
   anova(glmm_mod_0, glmm_mod_AoA, glmm_mod_prof, glmm_mod_trans, test = "Chisq")  
   #                npar   AIC   BIC logLik deviance  Chisq  Df Pr(>Chisq)    
-  # glmm_mod_0        8 54781 54832 -27382    54765                       
-  # glmm_mod_AoA      9 54783 54840 -27382    54765 0.2860  1    0.59278  
-  # glmm_mod_prof    10 54782 54845 -27381    54762 3.0390  1    0.08128 .
-  # glmm_mod_trans   11 54778 54848 -27378    54756 5.3527  1    0.02069 *
+  # glmm_mod_0        8 55537 55587 -27760    55521                       
+  # glmm_mod_AoA      9 55538 55596 -27760    55520 0.1141  1    0.73551  
+  # glmm_mod_prof    10 55538 55601 -27759    55518 2.7761  1    0.09568 .
+  # glmm_mod_trans   11 55539 55609 -27759    55517 0.5003  1    0.47935
   
-  glmm_mod_trans_int  <- update(glmm_mod_trans, . ~ . + AoA_sum:prof_z:noun_sum)
+  glmm_mod_trans_int  <- update(glmm_mod_0, . ~ . + AoA_sum:prof_z:noun_sum)
   
-  anova(glmm_mod_trans, glmm_mod_trans_int, test = "Chisq") 
+  anova(glmm_mod_0, glmm_mod_trans_int, test = "Chisq") 
   #                    npar   AIC   BIC logLik deviance  Chisq Df Pr(>Chisq)
-  # glmm_mod_trans       11 54778 54848 -27378    54756                     
-  # glmm_mod_trans_int   12 54780 54856 -27378    54756 0.2053  1     0.6505
+  # glmm_mod_0            8 55537 55587 -27760    55521                     
+  # glmm_mod_trans_int    9 55538 55596 -27760    55520 0.2553  1     0.6134
   
+  
+  glmm_mod_trans_gender <- update(glmm_mod_0, . ~ . + gender_sum)
   
   ### en
   
-  glmm_mod_trans_gender <- update(glmm_mod_trans, . ~ . + gender_sum)
   glmm_mod_trans_wmen <- update(glmm_mod_trans_gender, . ~ . + wmen_z)
   
-  anova(glmm_mod_trans, glmm_mod_trans_gender, glmm_mod_trans_wmen, test = "Chisq") 
+  anova(glmm_mod_0, glmm_mod_trans_gender, glmm_mod_trans_wmen, test = "Chisq") 
   #                       npar   AIC   BIC logLik deviance  Chisq Df Pr(>Chisq)
-  # glmm_mod_trans          11 54778 54848 -27378    54756                     
-  # glmm_mod_trans_gender   12 54779 54855 -27377    54755 1.6977  1     0.1926
-  # glmm_mod_trans_wmen     13 54780 54863 -27377    54754 0.4689  1     0.4935
+  # glmm_mod_0               8 55537 55587 -27760    55521                     
+  # glmm_mod_trans_gender    9 55538 55596 -27760    55520 0.0089  1     0.9247
+  # glmm_mod_trans_wmen     10 55540 55604 -27760    55520 0.0163  1     0.8985
   
-  glmm_mod_trans_int_en <- update(glmm_mod_trans, . ~ . + 
+  glmm_mod_trans_int_en <- update(glmm_mod_0, . ~ . + 
                                      AoA_sum:prof_z:noun_sum:gender_sum:wmen_z)
   
-  anova(glmm_mod_trans, glmm_mod_trans_int_en, test = "Chisq") 
+  anova(glmm_mod_0, glmm_mod_trans_int_en, test = "Chisq") 
   #                       npar   AIC   BIC logLik deviance  Chisq Df Pr(>Chisq)
-  # glmm_mod_trans          11 54778 54848 -27378    54756                     
-  # glmm_mod_trans_int_en   12 54780 54857 -27378    54756 0.1471  1     0.7013
+  # glmm_mod_0               8 55537 55587 -27760    55521                        
+  # glmm_mod_trans_int_en    9 55514 55572 -27748    55496 24.27  1  8.374e-07 ***
   
   ### FINAL MODEL TRANSPARENCY WITH EN WM IN HS
-  summary(glmm_mod_trans) 
+  summary(glmm_mod_trans_int_en) 
   # Fixed effects:
-  #                       Estimate Std. Error z value Pr(>|z|)    
-  # (Intercept)            -0.32237    0.05711  -5.645 1.65e-08 ***
-  # AoA_sum                -0.05278    0.04718  -1.119   0.2632    
-  # prof_z                  0.08268    0.04732   1.747   0.0806 .  
-  # noun_sum                0.06665    0.02852   2.337   0.0194 * 
+  #             Estimate Std. Error z value Pr(>|z|)    
+  # (Intercept) -0.26745    0.05124  -5.219 1.80e-07 ***
+  # AoA_sum:prof_z:noun_sum:gender_sum:wmen_z -0.05589    0.01134  -4.927 8.35e-07 ***
   
   
   # A - es
   
   glmm_mod_trans_wmes <- update(glmm_mod_trans_gender, . ~ . + wmes_z)
   
-  anova(glmm_mod_trans, glmm_mod_trans_gender, glmm_mod_trans_wmes, test = "Chisq") 
+  anova(glmm_mod_0, glmm_mod_trans_gender, glmm_mod_trans_wmes, test = "Chisq") 
   #                       npar   AIC   BIC logLik deviance  Chisq Df Pr(>Chisq)
-  # glmm_mod_trans          11 54778 54848 -27378    54756                     
-  # glmm_mod_trans_gender   12 54779 54855 -27377    54755 1.6977  1     0.1926
-  # glmm_mod_trans_wmes     13 54781 54863 -27377    54755 0.0047  1     0.9451
+  # glmm_mod_0               8 55537 55587 -27760    55521                     
+  # glmm_mod_trans_gender    9 55538 55596 -27760    55520 0.0089  1     0.9247
+  # glmm_mod_trans_wmes     10 55540 55604 -27760    55520 0.2756  1     0.5996
   
-  glmm_mod_trans_int_es <- update(glmm_mod_trans, . ~ . + 
+  glmm_mod_trans_int_es <- update(glmm_mod_0, . ~ . + 
                                     AoA_sum:prof_z:noun_sum:gender_sum:wmes_z)
   
-  anova(glmm_mod_trans, glmm_mod_trans_int_es, test = "Chisq") 
+  anova(glmm_mod_0, glmm_mod_trans_int_es, test = "Chisq") 
   #                       npar   AIC   BIC logLik deviance  Chisq Df Pr(>Chisq)
-  # glmm_mod_trans          11 54778 54848 -27378    54756                     
-  # glmm_mod_trans_int_es   12 54779 54855 -27377    54755 1.7055  1     0.1916
+  # glmm_mod_0               8 55537 55587 -27760    55521                         
+  # glmm_mod_trans_int_es    9 55519 55576 -27750    55501 19.595  1  9.571e-06 ***
   
   ### FINAL MODEL TRANSPARENCY WITH ES WM IN HS
-  summary(glmm_mod_trans) 
+  summary(glmm_mod_trans_int_es) 
   # Fixed effects:
-  #                       Estimate Std. Error z value Pr(>|z|)    
-  # (Intercept)            -0.32237    0.05711  -5.645 1.65e-08 ***
-  # AoA_sum                -0.05278    0.04718  -1.119   0.2632    
-  # prof_z                  0.08268    0.04732   1.747   0.0806 .  
-  # noun_sum                0.06665    0.02852   2.337   0.0194 * 
+  #             Estimate Std. Error z value Pr(>|z|)    
+  # (Intercept) -0.26745    0.05131  -5.212 1.87e-07 ***
+  # AoA_sum:prof_z:noun_sum:gender_sum:wmes_z -0.05195    0.01173  -4.428 9.51e-06 ***
   
   
   
@@ -204,70 +207,69 @@ if(F) {
   
   anova(glmm_mod_0, glmm_mod_AoA, glmm_mod_prof, glmm_mod_struc, test = "Chisq")  
   #                npar   AIC   BIC logLik deviance  Chisq  Df Pr(>Chisq)    
-  # glmm_mod_0        8 54781 54832 -27382    54765                       
-  # glmm_mod_AoA      9 54783 54840 -27382    54765 0.2860  1    0.59278  
-  # glmm_mod_prof    10 54782 54845 -27381    54762 3.0390  1    0.08128 .
-  # glmm_mod_struc   11 54783 54854 -27381    54761 0.1065  1    0.74422 
+  # glmm_mod_0        8 55537 55587 -27760    55521                       
+  # glmm_mod_AoA      9 55538 55596 -27760    55520 0.1141  1    0.73551  
+  # glmm_mod_prof    10 55538 55601 -27759    55518 2.7761  1    0.09568 .
+  # glmm_mod_struc   11 55539 55610 -27759    55517 0.1440  1    0.70432 
   
   glmm_mod_struc_int  <- update(glmm_mod_0, . ~ . + AoA_sum:prof_z:structure_sum)
   
-  anova(glmm_mod_struc, glmm_mod_struc_int, test = "Chisq") 
+  anova(glmm_mod_0, glmm_mod_struc_int, test = "Chisq") 
   #                    npar   AIC   BIC logLik deviance  Chisq Df Pr(>Chisq)
-  # glmm_mod_struc_int    9 54782 54839 -27382    54764                     
-  # glmm_mod_struc       11 54783 54854 -27381    54761 2.4458  2     0.2944
+  # glmm_mod_0            8 55537 55587 -27760    55521                     
+  # glmm_mod_struc_int    9 55538 55596 -27760    55520 0.0182  1     0.8926
   
+  glmm_mod_struc_gender <- update(glmm_mod_0, . ~ . + gender_sum)
   
   ### en
   
-  glmm_mod_struc_gender <- update(glmm_mod_0, . ~ . + gender_sum)
   glmm_mod_struc_wmen <- update(glmm_mod_struc_gender, . ~ . + wmen_z)
   
   anova(glmm_mod_0, glmm_mod_struc_gender, glmm_mod_struc_wmen, test = "Chisq") 
   #                       npar   AIC   BIC logLik deviance  Chisq Df Pr(>Chisq)
-  # glmm_mod_0               8 54781 54832 -27382    54765                     
-  # glmm_mod_struc_gender    9 54781 54839 -27382    54763 1.6909  1     0.1935
-  # glmm_mod_struc_wmen     10 54783 54847 -27382    54763 0.0009  1     0.9762
+  # glmm_mod_0               8 55537 55587 -27760    55521                     
+  # glmm_mod_struc_gender    9 55538 55596 -27760    55520 0.0089  1     0.9247
+  # glmm_mod_struc_wmen     10 55540 55604 -27760    55520 0.0163  1     0.8985
   
   glmm_mod_struc_int_en <- update(glmm_mod_0, . ~ . + 
                                     AoA_sum:prof_z:structure_sum:gender_sum:wmen_z)
   
   anova(glmm_mod_0, glmm_mod_struc_int_en, test = "Chisq") 
   #                       npar   AIC   BIC logLik deviance  Chisq Df Pr(>Chisq)
-  # glmm_mod_0               8 54781 54832 -27382    54765                       
-  # glmm_mod_struc_int_en    9 54772 54830 -27377    54754 10.44  1   0.001233 **
+  # glmm_mod_0               8 55537 55587 -27760    55521                         
+  # glmm_mod_struc_int_en    9 55482 55540 -27732    55464 56.198  1  6.552e-14 ***
   
   ### FINAL MODEL STRUCTURE WITH EN WM IN HS
   summary(glmm_mod_struc_int_en) 
   # Fixed effects:
-  #                                                           Estimate Std. Error z value Pr(>|z|)    
-  # (Intercept)                                               -0.33496    0.05794  -5.781 7.44e-09 ***
-  # AoA_sum:prof_z:structure_sum:gender_sum:wmen_z             0.03697    0.01143   3.233  0.00122 ** 
+  #             Estimate Std. Error z value Pr(>|z|)    
+  # (Intercept) -0.26816    0.05127  -5.230 1.69e-07 ***
+  # AoA_sum:prof_z:structure_sum:gender_sum:wmen_z  0.08477    0.01132   7.492 6.79e-14 ***
   
-  
-  # A - es
+  # B - es
   
   glmm_mod_struc_wmes <- update(glmm_mod_struc_gender, . ~ . + wmes_z)
   
   anova(glmm_mod_0, glmm_mod_struc_gender, glmm_mod_struc_wmes, test = "Chisq") 
   #                       npar   AIC   BIC logLik deviance  Chisq Df Pr(>Chisq)
-  # glmm_mod_0               8 54781 54832 -27382    54765                     
-  # glmm_mod_struc_gender    9 54781 54839 -27382    54763 1.6909  1     0.1935
-  # glmm_mod_struc_wmes     10 54782 54846 -27381    54762 0.7407  1     0.3894
+  # glmm_mod_0               8 55537 55587 -27760    55521                     
+  # glmm_mod_struc_gender    9 55538 55596 -27760    55520 0.0089  1     0.9247
+  # glmm_mod_struc_wmes     10 55540 55604 -27760    55520 0.2756  1     0.5996
   
   glmm_mod_struc_int_es <- update(glmm_mod_0, . ~ . + 
                                     AoA_sum:prof_z:structure_sum:gender_sum:wmes_z)
   
   anova(glmm_mod_0, glmm_mod_struc_int_es, test = "Chisq") 
   #                       npar   AIC   BIC logLik deviance  Chisq Df Pr(>Chisq)
-  # glmm_mod_0               8 54781 54832 -27382    54765                         
-  # glmm_mod_struc_int_es    9 54769 54826 -27375    54751 14.216  1  0.0001629 ***
+  # glmm_mod_0               8 55537 55587 -27760    55521                         
+  # glmm_mod_struc_int_es    9 55466 55523 -27724    55448 72.451  1  < 2.2e-16 ***
   
   ### FINAL MODEL STRUCTURE WITH ES WM IN HS
   summary(glmm_mod_struc_int_es) 
   # Fixed effects:
-  #                                                Estimate Std. Error z value Pr(>|z|)    
-  # (Intercept)                                    -0.33493    0.05796  -5.778 7.55e-09 ***
-  # AoA_sum:prof_z:structure_sum:gender_sum:wmes_z  0.04477    0.01187   3.773 0.000161 ***
+  #             Estimate Std. Error z value Pr(>|z|)    
+  # (Intercept) -0.26799    0.05129  -5.225 1.75e-07 ***
+  # AoA_sum:prof_z:structure_sum:gender_sum:wmes_z  0.09997    0.01176   8.504  < 2e-16 ***
   
   
 }
@@ -276,39 +278,39 @@ if(F) {
 
 # Save models
 
-saveRDS(glmm_mod_0, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_0, here("mods", "glmm", "onset_noun",
                                  "glmm_base.rds"))
-saveRDS(glmm_mod_AoA, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_AoA, here("mods", "glmm", "onset_noun",
                          "glmm_AoA.rds"))
-saveRDS(glmm_mod_prof, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_prof, here("mods", "glmm", "onset_noun",
                          "glmm_prof.rds"))
-saveRDS(glmm_mod_trans, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_trans, here("mods", "glmm", "onset_noun",
                          "glmm_trans.rds"))
-saveRDS(glmm_mod_struc, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_struc, here("mods", "glmm", "onset_noun",
                          "glmm_struc.rds"))
-saveRDS(glmm_mod_trans_int, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_trans_int, here("mods", "glmm", "onset_noun",
                              "glmm_trans_int.rds"))
-saveRDS(glmm_mod_struc_int, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_struc_int, here("mods", "glmm", "onset_noun",
                              "glmm_struc_int.rds"))
-saveRDS(glmm_mod_trans_gender, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_trans_gender, here("mods", "glmm", "onset_noun",
                              "glmm_trans_gender.rds"))
-saveRDS(glmm_mod_struc_gender, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_struc_gender, here("mods", "glmm", "onset_noun",
                              "glmm_struc_gender.rds"))
-saveRDS(glmm_mod_trans_wmen, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_trans_wmen, here("mods", "glmm", "onset_noun",
                                     "glmm_trans_wmen.rds"))
-saveRDS(glmm_mod_struc_wmen, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_struc_wmen, here("mods", "glmm", "onset_noun",
                                     "glmm_struc_wmen.rds"))
-saveRDS(glmm_mod_trans_wmes, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_trans_wmes, here("mods", "glmm", "onset_noun",
                                   "glmm_trans_wmes.rds"))
-saveRDS(glmm_mod_struc_wmes, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_struc_wmes, here("mods", "glmm", "onset_noun",
                                   "glmm_struc_wmes.rds"))
-saveRDS(glmm_mod_trans_int_en, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_trans_int_en, here("mods", "glmm", "onset_noun",
                                   "glmm_trans_int_en.rds"))
-saveRDS(glmm_mod_struc_int_en, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_struc_int_en, here("mods", "glmm", "onset_noun",
                                   "glmm_struc_int_en.rds"))
-saveRDS(glmm_mod_trans_int_es, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_trans_int_es, here("mods", "glmm", "onset_noun",
                                     "glmm_trans_int_es.rds"))
-saveRDS(glmm_mod_struc_int_es, here("mods", "glmm", "onset_que",
+saveRDS(glmm_mod_struc_int_es, here("mods", "glmm", "onset_noun",
                                     "glmm_struc_int_es.rds"))
 
 

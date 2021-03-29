@@ -10,21 +10,19 @@
 # Source scripts and load models ----------------------------------------------
 
 source(here::here("scripts", "00_load_libs.R"))
-source(here::here("scripts", "02_load_data.R"))
+det_50 <- read_csv(here::here("data", "det_50_gca_target_onset.csv"))
 
 # Get path to saved models 
-gca_mods_path <- here("mods", "stress", "gca") 
+gca_mods_path <- here("mods", "gca") 
 
 # Load models as list and store full mod to global env
-load(paste0(gca_mods_path, "/gca_mon_mods.Rdata"))
-load(paste0(gca_mods_path, "/gca_l2_mods.Rdata"))
+load(paste0(gca_mods_path, "/gca_mods.Rdata"))
 load(paste0(gca_mods_path, "/model_preds.Rdata"))
-list2env(gca_mon_mods, globalenv())
-list2env(gca_l2_mods, globalenv())
+list2env(gca_mods, globalenv())
 list2env(model_preds, globalenv())
 
 # Set path for saving figs
-figs_path <- here("figs", "stress", "gca")
+figs_path <- here("figs", "gca")
 
 # -----------------------------------------------------------------------------
 
@@ -35,73 +33,138 @@ figs_path <- here("figs", "stress", "gca")
 
 # Plot raw data ---------------------------------------------------------------
 
-stress50$cond <- as.factor(as.character(stress50$cond))
+transparency_names <- c(
+  `opaq` = 'Opaque nouns',
+  `transp` = 'Transparent nouns'
+)
 
-condition_names <- c(
-  `1` = 'Present',
-  `2` = 'Preterit'
+group_names <- c(
+  `hs` = 'HS',
+  `l2` = 'L2',
+  `ss` = 'SS'
 )
 
 
-stress_p1 <- stress50 %>%        
-    #na.omit(.) %>%
+det_gender <- det_50 %>%         
     filter(., time_zero >= -10, time_zero <= 20) %>%
-    mutate(., l1 = fct_relevel(l1, "es", "en", "ma")) %>%
-    ggplot(., aes(x = time_zero, y = target_prop, fill = l1)) +
-    facet_grid(. ~ cond, labeller = as_labeller(condition_names)) +
+    mutate(., noun_transparency = fct_relevel(noun_transparency, "transp", "opaq"),
+           gender = fct_relevel(gender, "masc", "feme")) %>%
+    ggplot(., aes(x = time_zero, y = target_prop, fill = gender)) +
+    facet_grid(. ~ noun_transparency, labeller = as_labeller(transparency_names)) +  
     geom_hline(yintercept = 0.5, color = 'white', size = 3) +
     geom_vline(xintercept = 0, color = 'grey40', lty = 3) +
     geom_vline(xintercept = 4, color = 'grey40', lty = 3) +
     stat_summary(fun.y = "mean", geom = "line", size = 1) +  
     stat_summary(fun.data = mean_cl_boot, geom = 'pointrange', size = 0.5,
                  stroke = 0.5, pch = 21) +
-    scale_fill_brewer(palette = 'Set1', name = "L1",
-                       labels = c("ES", "EN", "MA")) +
-    scale_x_continuous(breaks = c(-10, 0, 10, 20),
-                       labels = c("-500", "0", "500", "1000")) +
+    scale_fill_brewer(palette = 'Set1', name = "Gender", 
+                       labels = c("masculine", "feminine")) +
+    # scale_x_continuous(breaks = c(-10, 0, 10, 20),
+    #                    labels = c("-500", "0", "500", "1000")) +
     labs(y = 'Proportion of target fixations',
          x = 'Time relative to target syllable offset (ms)',
          caption = "Mean +/- 95% CI") +
     annotate("text", x = 3.3, y = 0.02, label = '200ms',
              angle = 90, size = 3, hjust = 0) +
+    ggtitle('Time course per noun gender according to noun type') +
     theme_grey(base_size = 12, base_family = "Times")
 
-l1_names <- c(
-  `es` = 'Spanish speakers',
-  `en` = 'English speakers',
-  `ma` = 'Mandarin speakers'
-)
-
-stress_p2 <- stress50 %>%        
-  #na.omit(.) %>%
+det_transparency <- det_50 %>%          
   filter(., time_zero >= -10, time_zero <= 20) %>%
-  mutate(., l1 = fct_relevel(l1, "es", "en", "ma")) %>%
-  ggplot(., aes(x = time_zero, y = target_prop, fill = cond)) +
-  facet_grid(. ~ l1, labeller = as_labeller(l1_names)) +
+  mutate(., noun_transparency = fct_relevel(noun_transparency, "transp", "opaq"),
+         gender = fct_relevel(gender, "masc", "feme")) %>%
+  ggplot(., aes(x = time_zero, y = target_prop, fill = noun_transparency)) +
+  facet_grid(. ~ structure) +
   geom_hline(yintercept = 0.5, color = 'white', size = 3) +
   geom_vline(xintercept = 0, color = 'grey40', lty = 3) +
   geom_vline(xintercept = 4, color = 'grey40', lty = 3) +
   stat_summary(fun.y = "mean", geom = "line", size = 1) +  
   stat_summary(fun.data = mean_cl_boot, geom = 'pointrange', size = 0.5,
                stroke = 0.5, pch = 21) +
-  scale_fill_brewer(palette = 'Set1', name = "Tense",
-                    labels = c("Present", "Preterit")) +
-  scale_x_continuous(breaks = c(-10, 0, 10, 20),
-                     labels = c("-500", "0", "500", "1000")) +
+  scale_fill_brewer(palette = 'Set1', name = "Noun transparency",
+                    labels = c('transparent', 'opaque')) +
   labs(y = 'Proportion of target fixations',
        x = 'Time relative to target syllable offset (ms)',
        caption = "Mean +/- 95% CI") +
   annotate("text", x = 3.3, y = 0.02, label = '200ms',
            angle = 90, size = 3, hjust = 0) +
+  ggtitle('Time course per noun transparency according to phrase structure') +
   theme_grey(base_size = 12, base_family = "Times")
 
+det_structure <- det_50 %>%          
+  filter(., time_zero >= -10, time_zero <= 20) %>%
+  mutate(., noun_transparency = fct_relevel(noun_transparency, "transp", "opaq"),
+         gender = fct_relevel(gender, "masc", "feme"),
+         group = fct_relevel(group, 'ss', 'hs', 'l2')) %>%
+  ggplot(., aes(x = time_zero, y = target_prop, fill = structure)) +
+  facet_grid(. ~ group, labeller = as_labeller(group_names)) +
+  geom_hline(yintercept = 0.5, color = 'white', size = 3) +
+  geom_vline(xintercept = 0, color = 'grey40', lty = 3) +
+  geom_vline(xintercept = 4, color = 'grey40', lty = 3) +
+  stat_summary(fun.y = "mean", geom = "line", size = 1) +  
+  stat_summary(fun.data = mean_cl_boot, geom = 'pointrange', size = 0.5,
+               stroke = 0.5, pch = 21) +
+  scale_fill_brewer(palette = 'Set1', name = "Phrase structure",
+                    labels = c('Gendered determiner', 'Ungendered determiner')) +
+  labs(y = 'Proportion of target fixations',
+       x = 'Time relative to target syllable offset (ms)',
+       caption = "Mean +/- 95% CI") +
+  annotate("text", x = 3.3, y = 0.02, label = '200ms',
+           angle = 90, size = 3, hjust = 0) +
+  ggtitle('Time course per phrase structure according to AoA (0 vs. L2') +
+  theme_grey(base_size = 12, base_family = "Times")
 
-ggsave('stress_l1.png',
-       plot = stress_p1, dpi = 600, device = "png",
+# det_50 %>%          
+#   filter(., time_zero >= -10, time_zero <= 20) %>%
+#   ggplot(., aes(x = time_zero, y = target_prop, fill = structure)) +
+#   geom_hline(yintercept = 0.5, color = 'white', size = 3) +
+#   geom_vline(xintercept = 0, color = 'grey40', lty = 3) +
+#   geom_vline(xintercept = 4, color = 'grey40', lty = 3) +
+#   stat_summary(fun.y = "mean", geom = "line", size = 1) +  
+#   stat_summary(fun.data = mean_cl_boot, geom = 'pointrange', size = 0.5,
+#                stroke = 0.5, pch = 21)
+#
+
+det_group <- det_50 %>%
+  mutate(AoA = if_else(group != 'l2', 'native', "l2")) %>%
+  filter(., time_zero >= -10, time_zero <= 20) %>%
+  ggplot(., aes(x = time_zero, y = target_prop, fill = AoA)) +
+  geom_hline(yintercept = 0.5, color = 'white', size = 3) +
+  geom_vline(xintercept = 0, color = 'grey40', lty = 3) +
+  geom_vline(xintercept = 4, color = 'grey40', lty = 3) +
+  stat_summary(fun.y = "mean", geom = "line", size = 1) +
+  stat_summary(fun.data = mean_cl_boot, geom = 'pointrange', size = 0.5,
+               stroke = 0.5, pch = 21)
+
+
+# does not show gradient of continuous fill variable
+# det_50 %>%          
+#   filter(., time_zero >= -10, time_zero <= 20) %>%
+#   ggplot(., aes(x = time_zero, y = target_prop, fill = prof_z)) + # test wm
+#   geom_hline(yintercept = 0.5, color = 'white', size = 3) +
+#   geom_vline(xintercept = 0, color = 'grey40', lty = 3) +
+#   geom_vline(xintercept = 4, color = 'grey40', lty = 3) +
+#   stat_summary(fun.y = "mean", geom = "line", size = 1) +  
+#   stat_summary(fun.data = mean_cl_boot, geom = 'pointrange', size = 0.5,
+#                stroke = 0.5, pch = 21) +
+#   geom_point(aes(color = prof_z), alpha = .5, pch = 21, size = 0.85, show.legend = T)
+#  
+
+
+ggsave('det_gender.png',
+       plot = det_gender, dpi = 600, device = "png",
        path = figs_path,
        height = 3.5, width = 8.5, units = 'in')
-ggsave('stress_tense.png',
-       plot = stress_p1, dpi = 600, device = "png",
+ggsave('det_transparency.png',
+       plot = det_transparency, dpi = 600, device = "png",
+       path = figs_path,
+       height = 3.5, width = 8.5, units = 'in')
+ggsave('det_group.png',
+       plot = det_group, dpi = 600, device = "png",
+       path = figs_path,
+       height = 3.5, width = 8.5, units = 'in')
+ggsave('det_structure.png',
+       plot = det_structure, dpi = 600, device = "png",
        path = figs_path,
        height = 3.5, width = 8.5, units = 'in')
 
@@ -114,417 +177,524 @@ ggsave('stress_tense.png',
 
 # Plot GCA --------------------------------------------------------------------
 
-# Monolingual Spanish speakers
-
-stress_mon <- model_preds$fits_all_mon %>%
-  mutate(condition = if_else(condition_sum == 1, "Present", "Preterit"),
-         condition = fct_relevel(condition, "Present"))%>%
-  ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
-                fill = condition)) + #, color = condition
-  geom_hline(yintercept = 0, lty = 3, size = 0.4) +
-  geom_vline(xintercept = 4, lty = 3, size = 0.4) +
-  stat_summary(fun.y = "mean", geom = "line", size = 1) + 
-  # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
-  stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
-               alpha = 0.5) +
-  geom_point(aes(color = condition), size = 1.3, show.legend = F) +
-  geom_point(aes(color = condition), size = 0.85, show.legend = F) +
-  scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
-                     labels = c("-200", "0", "200", "400", "600")) +
-  labs(x = "Time (ms) relative to target syllable offset",
-       y = "Empirical logit of looks to target") +
-  theme_big + legend_adj #+ labs(color = "Condition")
-
-
-# L2 speakers
-
-# Proficiency
-
-
-
-
-# Within group differences
-stress_dele_l1 <- model_preds$fits_all_l2_dele %>%
-  mutate(condition = if_else(condition_sum == 1, "Present", "Preterit"),
-         condition = fct_relevel(condition, "Present"),
-         l1 = if_else(l1 == 'EN', 'English', 'Mandarin'),
-         l1 = fct_relevel(l1, "English", "Mandarin")) %>%
-  ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
-                fill = condition)) +
-  facet_wrap(l1 ~ .) +
-  geom_hline(yintercept = 0, lty = 3, size = 0.4) +
-  geom_vline(xintercept = 4, lty = 3, size = 0.4) +
-  stat_summary(fun.y = "mean", geom = "line", size = 1) + 
-  # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
-  stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
-               alpha = 0.5) +
-  geom_point(aes(color = DELE_z), alpha = .5, pch = 21, size = 0.85, show.legend = T) +
-  scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
-                     labels = c("-200", "0", "200", "400", "600")) +
-  labs(x = "Time (ms) relative to target syllable offset",
-       y = "Empirical logit of looks to target",
-       color = 'L2 proficiency') +
-  scale_fill_brewer(palette = 'Set1', name = "Tense",
-                    labels = c("Present", "Preterit")) +
-  theme_big + labs(color = "Proficiency") +
-  theme(
-    legend.position = c(0.06, 0.7),
-    legend.key = element_blank(),
-    legend.background = element_blank(),
-    strip.background = element_blank(),
-    axis.title.y = element_text(size = rel(.9), hjust = 0.95),
-    axis.title.x = element_text(size = rel(.9)),
-    legend.key.size = unit(0.75, 'lines'),
-    legend.text = element_text(size = 6),
-    legend.title = element_text(size = 7),
-    plot.margin = unit(rep(2, 4), "mm"),
-    panel.grid.major = element_line(colour = 'grey90', size = 0.15),
-    panel.grid.minor = element_line(colour = 'grey90', size = 0.15)
-  )
+# Transparency + wm EN
   
-
-  
-
-
-# Within condition differences
-stress_dele_cond <- model_preds$fits_all_l2_dele %>%
-  mutate(condition = if_else(condition_sum == 1, "Present", "Preterit"),
-         condition = fct_relevel(condition, "Present"),
-         l1 = if_else(l1 == 'EN', 'English', 'Mandarin'),
-         l1 = fct_relevel(l1, "English", "Mandarin"))%>%
-  ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
-                fill = l1, color = DELE_z)) +
-  facet_wrap(condition ~ .) +
-  geom_hline(yintercept = 0, lty = 3, size = 0.4) +
-  geom_vline(xintercept = 4, lty = 3, size = 0.4) +
-  stat_summary(fun.y = "mean", geom = "line", size = 1) +
-  # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
-  stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
-               alpha = 0.5) +
-  geom_point(aes(color = DELE_z), alpha = .6, pch = 21, 
-             size = 0.85, show.legend = T) +
-  scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
+transEN_AoA <- model_preds$fits_all_transEN %>%
+    mutate(noun_transp = if_else(noun_sum == 1, "transparent", "opaque"),
+           noun_transp = fct_relevel(noun_transp, 'transparent'),
+           gender = if_else(gender_sum == 1, "masculine", "feminine"),
+           gender = fct_relevel(gender, 'masculine'),
+           AoA = if_else(AoA_sum == 1, 'Birth', 'L2'),
+           AoA = fct_relevel(AoA, 'Birth')) %>%
+    ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
+                  fill = AoA)) + #, color = condition
+    geom_hline(yintercept = 0, lty = 3, size = 0.4) +
+    geom_vline(xintercept = 4, lty = 3, size = 0.4) +
+    stat_summary(fun.y = "mean", geom = "line", size = 1) + 
+    # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
+    stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
+                 alpha = 0.5) +
+    geom_point(aes(color = AoA), size = 0.8, show.legend = F) + # , alpha = .1, pch = 5
+    scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
                      labels = c("-200", "0", "200", "400", "600")) +
-  labs(x = "Time (ms) relative to target syllable offset",
-       y = "Empirical logit of looks to target") +
-  scale_fill_brewer(palette = 'Set1', name = "L1",
-                    labels = c("English", "Mandarin")) +
-  theme_big + labs(color = "Proficiency") + #legend_adj + 
-  theme(
-    legend.position = c(0.065, 0.65),
-    legend.key = element_blank(),
-    legend.background = element_blank(),
-    strip.background = element_blank(),
-    axis.title.y = element_text(size = rel(.9), hjust = 0.95),
-    axis.title.x = element_text(size = rel(.9)),
-    legend.key.size = unit(0.75, 'lines'),
-    legend.text = element_text(size = 6),
-    legend.title = element_text(size = 6),
-    plot.margin = unit(rep(2, 4), "mm"),
-    panel.grid.major = element_line(colour = 'grey90', size = 0.15),
-    panel.grid.minor = element_line(colour = 'grey90', size = 0.15)
-  )
+    labs(x = "Time (ms) relative to target syllable offset",
+         y = "Empirical logit of looks to target") +
+    theme_big + legend_adj + labs(fill = "AoA")
 
-# Condition and L1 split
-stress_dele_split <- model_preds$fits_all_l2_dele %>%
-  mutate(condition = if_else(condition_sum == 1, "Present", "Preterit"),
-         condition = fct_relevel(condition, "Present"),
-         l1 = if_else(l1 == 'EN', 'English', 'Mandarin'),
-         l1 = fct_relevel(l1, "English", "Mandarin"))%>%
+
+transEN_prof <- model_preds$fits_all_transEN %>%
+  mutate(noun_transp = if_else(noun_sum == 1, "transparent", "opaque"),
+         noun_transp = fct_relevel(noun_transp, 'transparent'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine'),
+         AoA = if_else(AoA_sum == 1, 'Birth', 'L2'),
+         AoA = fct_relevel(AoA, 'Birth')) %>%
   ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
-                color = DELE_z)) +
-  facet_grid(condition ~ l1) +
+                fill = prof_z)) + #, color = condition
   geom_hline(yintercept = 0, lty = 3, size = 0.4) +
   geom_vline(xintercept = 4, lty = 3, size = 0.4) +
   stat_summary(fun.y = "mean", geom = "line", size = 1) + 
   # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
   stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
                alpha = 0.5) +
-  geom_point(aes(color = DELE_z), size = 0.85, show.legend = F) +
+  geom_point(aes(color = prof_z), size = 0.8, show.legend = F) + #, alpha = .1, pch = 5
   scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
                      labels = c("-200", "0", "200", "400", "600")) +
   labs(x = "Time (ms) relative to target syllable offset",
        y = "Empirical logit of looks to target") +
-  theme_big + labs(color = "Proficiency") +
-  theme(
-    legend.position = c(0.1, 0.85),
-    legend.key = element_blank(),
-    legend.background = element_blank(),
-    strip.background = element_blank(),
-    axis.title.y = element_text(size = rel(.9), hjust = 0.95),
-    axis.title.x = element_text(size = rel(.9)),
-    legend.key.size = unit(0.75, 'lines'),
-    legend.text = element_text(size = 6),
-    legend.title = element_text(size = 7),
-    plot.margin = unit(rep(2, 4), "mm"),
-    panel.grid.major = element_line(colour = 'grey90', size = 0.15),
-    panel.grid.minor = element_line(colour = 'grey90', size = 0.15)
-  )
+  theme_big + legend_adj + labs(fill = "Proficiency") +
+  theme(legend.position = c(0.08, 0.8))
 
 
-
-
-# L2 use
-
-# Within group differences
-stress_use_l1 <- model_preds$fits_all_l2_use %>%
-  mutate(condition = if_else(condition_sum == 1, "Present", "Preterit"),
-         condition = fct_relevel(condition, "Present"),
-         l1 = if_else(l1 == 'EN', 'English', 'Mandarin'),
-         l1 = fct_relevel(l1, "English", "Mandarin")) %>%
+transEN_transparency <- model_preds$fits_all_transEN %>%
+  mutate(noun_transp = if_else(noun_sum == 1, "transparent", "opaque"),
+         noun_transp = fct_relevel(noun_transp, 'transparent'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine')) %>%
   ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
-                fill = condition, color = use_z)) +
-  facet_wrap(l1 ~ .) +
+                fill = noun_transp)) + #, color = condition
   geom_hline(yintercept = 0, lty = 3, size = 0.4) +
   geom_vline(xintercept = 4, lty = 3, size = 0.4) +
   stat_summary(fun.y = "mean", geom = "line", size = 1) + 
   # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
   stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
                alpha = 0.5) +
-  geom_point(aes(color = use_z), alpha = .6, pch = 21, 
-             size = 0.85, show.legend = T) +
+  geom_point(aes(color = noun_transp), size = 0.8, show.legend = F) +
   scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
                      labels = c("-200", "0", "200", "400", "600")) +
   labs(x = "Time (ms) relative to target syllable offset",
        y = "Empirical logit of looks to target") +
-  scale_fill_brewer(palette = 'Set1', name = "Tense",
-                    labels = c("Present", "Preterit")) +
-  theme_big + labs(color = "Weekly L2 % use") +
-  theme(
-    legend.position = c(0.1, 0.68),
-    legend.key = element_blank(),
-    legend.background = element_blank(),
-    strip.background = element_blank(),
-    axis.title.y = element_text(size = rel(.9), hjust = 0.95),
-    axis.title.x = element_text(size = rel(.9)),
-    legend.key.size = unit(0.75, 'lines'),
-    legend.text = element_text(size = 6),
-    legend.title = element_text(size = 7),
-    plot.margin = unit(rep(2, 4), "mm"),
-    panel.grid.major = element_line(colour = 'grey90', size = 0.15),
-    panel.grid.minor = element_line(colour = 'grey90', size = 0.15)
-  )
+  theme_big + legend_adj + labs(fill = "Noun transparency")
 
-# Within condition differences
-stress_use_cond <- model_preds$fits_all_l2_use %>%
-  mutate(condition = if_else(condition_sum == 1, "Present", "Preterit"),
-         condition = fct_relevel(condition, "Present"),
-         l1 = if_else(l1 == 'EN', 'English', 'Mandarin'),
-         l1 = fct_relevel(l1, "English", "Mandarin"))%>%
+
+transEN_gender <- model_preds$fits_all_transEN %>%
+  mutate(noun_transp = if_else(noun_sum == 1, "transparent", "opaque"),
+         noun_transp = fct_relevel(noun_transp, 'transparent'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine')) %>%
   ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
-                fill = l1, color = use_z)) +
-  facet_wrap(condition ~ .) +
+                fill = gender)) + #, color = condition
   geom_hline(yintercept = 0, lty = 3, size = 0.4) +
   geom_vline(xintercept = 4, lty = 3, size = 0.4) +
   stat_summary(fun.y = "mean", geom = "line", size = 1) + 
   # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
   stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
                alpha = 0.5) +
-  geom_point(aes(color = use_z), alpha = .6, pch = 21, 
-             size = 0.85, show.legend = T) +
+  # geom_smooth(aes(color = gender))
+  geom_point(aes(color = gender), size = 0.8, show.legend = F) +
+  #scale_fill_brewer(palette = 'Set2', name = "Gender") +
   scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
                      labels = c("-200", "0", "200", "400", "600")) +
   labs(x = "Time (ms) relative to target syllable offset",
        y = "Empirical logit of looks to target") +
-  scale_fill_brewer(palette = 'Set1', name = "L1",
-                    labels = c("EN", "MA")) +
-  theme_big + labs(color = "Weekly L2 % use") +
-  theme(
-    legend.position = c(0.1, 0.68),
-    legend.key = element_blank(),
-    legend.background = element_blank(),
-    strip.background = element_blank(),
-    axis.title.y = element_text(size = rel(.9), hjust = 0.95),
-    axis.title.x = element_text(size = rel(.9)),
-    legend.key.size = unit(0.75, 'lines'),
-    legend.text = element_text(size = 6),
-    legend.title = element_text(size = 7),
-    plot.margin = unit(rep(2, 4), "mm"),
-    panel.grid.major = element_line(colour = 'grey90', size = 0.15),
-    panel.grid.minor = element_line(colour = 'grey90', size = 0.15)
-  )
+  theme_big + legend_adj + labs(fill = "Gender")
 
-# Condition and L1 split
-stress_use_split <- model_preds$fits_all_l2_dele %>%
-  mutate(condition = if_else(condition_sum == 1, "Present", "Preterit"),
-         condition = fct_relevel(condition, "Present"),
-         l1 = if_else(l1 == 'EN', 'English', 'Mandarin'),
-         l1 = fct_relevel(l1, "English", "Mandarin"))%>%
+
+transEN_wm <- model_preds$fits_all_transEN %>%
+  mutate(noun_transp = if_else(noun_sum == 1, "transparent", "opaque"),
+         noun_transp = fct_relevel(noun_transp, 'transparent'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine'),
+         AoA = if_else(AoA_sum == 1, 'Birth', 'L2'),
+         AoA = fct_relevel(AoA, 'Birth')) %>%
   ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
-                color = use_z)) +
-  facet_grid(condition ~ l1) +
+                fill = wmen_z)) + 
   geom_hline(yintercept = 0, lty = 3, size = 0.4) +
   geom_vline(xintercept = 4, lty = 3, size = 0.4) +
   stat_summary(fun.y = "mean", geom = "line", size = 1) + 
   # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
   stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
                alpha = 0.5) +
-  geom_point(aes(color = use_z), size = 1.3, show.legend = F) +
-  geom_point(aes(color = use_z), size = 0.85, show.legend = F) +
+  geom_point(aes(color = wmen_z), size = 0.8, show.legend = F) + #, alpha = .1, pch = 5
   scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
                      labels = c("-200", "0", "200", "400", "600")) +
   labs(x = "Time (ms) relative to target syllable offset",
        y = "Empirical logit of looks to target") +
-  theme_big + labs(color = "Weekly L2 % use") +
-  theme(
-    legend.position = c(0.11, 0.85),
-    legend.key = element_blank(),
-    legend.background = element_blank(),
-    strip.background = element_blank(),
-    axis.title.y = element_text(size = rel(.9), hjust = 0.95),
-    axis.title.x = element_text(size = rel(.9)),
-    legend.key.size = unit(0.75, 'lines'),
-    legend.text = element_text(size = 6),
-    legend.title = element_text(size = 7),
-    plot.margin = unit(rep(2, 4), "mm"),
-    panel.grid.major = element_line(colour = 'grey90', size = 0.15),
-    panel.grid.minor = element_line(colour = 'grey90', size = 0.15)
-  )
+  theme_big + legend_adj + labs(fill = "WM (HS EN)") +
+  theme(legend.position = c(0.08, 0.8))
 
 
 
 
+# Transparency + wm ES
 
-# wm
-
-# Within group differences
-stress_wm_l1 <- model_preds$fits_all_l2_wm %>%
-  mutate(condition = if_else(condition_sum == 1, "Present", "Preterit"),
-         condition = fct_relevel(condition, "Present"),
-         l1 = if_else(l1 == 'en', 'English', 'Mandarin'),
-         l1 = fct_relevel(l1, "English", "Mandarin"))%>%
+transES_AoA <- model_preds$fits_all_transES %>%
+  mutate(noun_transp = if_else(noun_sum == 1, "transparent", "opaque"),
+         noun_transp = fct_relevel(noun_transp, 'transparent'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine'),
+         AoA = if_else(AoA_sum == 1, 'Birth', 'L2'),
+         AoA = fct_relevel(AoA, 'Birth')) %>%
   ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
-                fill = condition, color = ospan)) +
-  facet_wrap(l1 ~ .) +
+                fill = AoA)) + #, color = condition
   geom_hline(yintercept = 0, lty = 3, size = 0.4) +
   geom_vline(xintercept = 4, lty = 3, size = 0.4) +
   stat_summary(fun.y = "mean", geom = "line", size = 1) + 
   # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
   stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
                alpha = 0.5) +
-  geom_point(aes(color = ospan), size = 1.3, show.legend = F) +
-  geom_point(aes(color = ospan), size = 0.85, show.legend = F) +
+  geom_point(aes(color = AoA), size = 0.8, show.legend = F) + # , alpha = .1, pch = 5
   scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
                      labels = c("-200", "0", "200", "400", "600")) +
   labs(x = "Time (ms) relative to target syllable offset",
        y = "Empirical logit of looks to target") +
-  scale_fill_brewer(palette = 'Set1', name = "Tense",
-                    labels = c("Present", "Preterit")) +
-  theme_big + labs(color = "Verbal WM") +
-  theme(
-    legend.position = c(0.1, 0.75),
-    legend.key = element_blank(),
-    legend.background = element_blank(),
-    strip.background = element_blank(),
-    axis.title.y = element_text(size = rel(.9), hjust = 0.95),
-    axis.title.x = element_text(size = rel(.9)),
-    legend.key.size = unit(0.75, 'lines'),
-    legend.text = element_text(size = 6),
-    legend.title = element_text(size = 7),
-    plot.margin = unit(rep(2, 4), "mm"),
-    panel.grid.major = element_line(colour = 'grey90', size = 0.15),
-    panel.grid.minor = element_line(colour = 'grey90', size = 0.15)
-  )
+  theme_big + legend_adj + labs(fill = "AoA")
 
-# Within condition differences
-stress_wm_cond <- model_preds$fits_all_l2_wm %>%
-  mutate(condition = if_else(condition_sum == 1, "Present", "Preterit"),
-         condition = fct_relevel(condition, "Present"),
-         l1 = if_else(l1 == 'en', 'English', 'Mandarin'),
-         l1 = fct_relevel(l1, "English", "Mandarin"))%>%
+
+transES_prof <- model_preds$fits_all_transES %>%
+  mutate(noun_transp = if_else(noun_sum == 1, "transparent", "opaque"),
+         noun_transp = fct_relevel(noun_transp, 'transparent'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine'),
+         AoA = if_else(AoA_sum == 1, 'Birth', 'L2'),
+         AoA = fct_relevel(AoA, 'Birth')) %>%
   ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
-                fill = l1, color = ospan)) +
-  facet_wrap(condition ~ .) +
+                fill = prof_z)) + #, color = condition
   geom_hline(yintercept = 0, lty = 3, size = 0.4) +
   geom_vline(xintercept = 4, lty = 3, size = 0.4) +
   stat_summary(fun.y = "mean", geom = "line", size = 1) + 
   # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
   stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
                alpha = 0.5) +
-  geom_point(aes(color = ospan), size = 1.3, show.legend = F) +
-  geom_point(aes(color = ospan), size = 0.85, show.legend = F) +
+  geom_point(aes(color = prof_z), size = 0.8, show.legend = F) + #, alpha = .1, pch = 5
   scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
                      labels = c("-200", "0", "200", "400", "600")) +
   labs(x = "Time (ms) relative to target syllable offset",
        y = "Empirical logit of looks to target") +
-  scale_fill_brewer(palette = 'Set1', name = "L1",
-                    labels = c("EN", "MA")) +
-  theme_big + labs(color = "Verbal WM") +
-  theme(
-    legend.position = c(0.1, 0.75),
-    legend.key = element_blank(),
-    legend.background = element_blank(),
-    strip.background = element_blank(),
-    axis.title.y = element_text(size = rel(.9), hjust = 0.95),
-    axis.title.x = element_text(size = rel(.9)),
-    legend.key.size = unit(0.75, 'lines'),
-    legend.text = element_text(size = 6),
-    legend.title = element_text(size = 7),
-    plot.margin = unit(rep(2, 4), "mm"),
-    panel.grid.major = element_line(colour = 'grey90', size = 0.15),
-    panel.grid.minor = element_line(colour = 'grey90', size = 0.15)
-  )
+  theme_big + legend_adj + labs(fill = "Proficiency") +
+  theme(legend.position = c(0.08, 0.8))
 
-# Condition and L1 split
-stress_wm_split <- model_preds$fits_all_l2_wm %>%
-  mutate(condition = if_else(condition_sum == 1, "Present", "Preterit"),
-         condition = fct_relevel(condition, "Present"),
-         l1 = if_else(l1 == 'en', 'English', 'Mandarin'),
-         l1 = fct_relevel(l1, "English", "Mandarin"))%>%
+
+transES_transparency <- model_preds$fits_all_transES %>%
+  mutate(noun_transp = if_else(noun_sum == 1, "transparent", "opaque"),
+         noun_transp = fct_relevel(noun_transp, 'transparent'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine')) %>%
   ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
-                color = ospan)) +
-  facet_grid(condition ~ l1) +
+                fill = noun_transp)) + #, color = condition
   geom_hline(yintercept = 0, lty = 3, size = 0.4) +
   geom_vline(xintercept = 4, lty = 3, size = 0.4) +
   stat_summary(fun.y = "mean", geom = "line", size = 1) + 
   # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
   stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
                alpha = 0.5) +
-  geom_point(aes(color = ospan), size = 1.3, show.legend = F) +
-  geom_point(aes(color = ospan), size = 0.85, show.legend = F) +
+  geom_point(aes(color = noun_transp), size = 0.8, show.legend = F) +
   scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
                      labels = c("-200", "0", "200", "400", "600")) +
   labs(x = "Time (ms) relative to target syllable offset",
        y = "Empirical logit of looks to target") +
-  theme_big + labs(color = "Verbal WM") +
-  theme(
-    legend.position = c(0.1, 0.85),
-    legend.key = element_blank(),
-    legend.background = element_blank(),
-    strip.background = element_blank(),
-    axis.title.y = element_text(size = rel(.9), hjust = 0.95),
-    axis.title.x = element_text(size = rel(.9)),
-    legend.key.size = unit(0.75, 'lines'),
-    legend.text = element_text(size = 6),
-    legend.title = element_text(size = 7),
-    plot.margin = unit(rep(2, 4), "mm"),
-    panel.grid.major = element_line(colour = 'grey90', size = 0.15),
-    panel.grid.minor = element_line(colour = 'grey90', size = 0.15)
-  )
+  theme_big + legend_adj + labs(fill = "Noun transparency")
+
+
+transES_gender <- model_preds$fits_all_transES %>%
+  mutate(noun_transp = if_else(noun_sum == 1, "transparent", "opaque"),
+         noun_transp = fct_relevel(noun_transp, 'transparent'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine')) %>%
+  ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
+                fill = gender)) + #, color = condition
+  geom_hline(yintercept = 0, lty = 3, size = 0.4) +
+  geom_vline(xintercept = 4, lty = 3, size = 0.4) +
+  stat_summary(fun.y = "mean", geom = "line", size = 1) + 
+  # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
+  stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
+               alpha = 0.5) +
+  # geom_smooth(aes(color = gender))
+  geom_point(aes(color = gender), size = 0.8, show.legend = F) +
+  #scale_fill_brewer(palette = 'Set2', name = "Gender") +
+  scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
+                     labels = c("-200", "0", "200", "400", "600")) +
+  labs(x = "Time (ms) relative to target syllable offset",
+       y = "Empirical logit of looks to target") +
+  theme_big + legend_adj + labs(fill = "Gender")
+
+
+transES_wm <- model_preds$fits_all_transES %>%
+  mutate(noun_transp = if_else(noun_sum == 1, "transparent", "opaque"),
+         noun_transp = fct_relevel(noun_transp, 'transparent'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine'),
+         AoA = if_else(AoA_sum == 1, 'Birth', 'L2'),
+         AoA = fct_relevel(AoA, 'Birth')) %>%
+  ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
+                fill = wmes_z)) + 
+  geom_hline(yintercept = 0, lty = 3, size = 0.4) +
+  geom_vline(xintercept = 4, lty = 3, size = 0.4) +
+  stat_summary(fun.y = "mean", geom = "line", size = 1) + 
+  # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
+  stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
+               alpha = 0.5) +
+  geom_point(aes(color = wmes_z), size = 0.8, show.legend = F) + #, alpha = .1, pch = 5
+  scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
+                     labels = c("-200", "0", "200", "400", "600")) +
+  labs(x = "Time (ms) relative to target syllable offset",
+       y = "Empirical logit of looks to target") +
+  theme_big + legend_adj + labs(fill = "WM (HS ES)") +
+  theme(legend.position = c(0.08, 0.8))
 
 
 
 
+# Phrase structure + wm EN
 
-ggsave(paste0(figs_path, "/stress_mon.png"), stress_mon, width = 150,
+strucEN_AoA <- model_preds$fits_all_strucEN %>%
+  mutate(structure = if_else(structure_sum == 1, "d_n_adj", "n_adj"),
+         structure = fct_relevel(structure, 'd_n_adj'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine'),
+         AoA = if_else(AoA_sum == 1, 'Birth', 'L2'),
+         AoA = fct_relevel(AoA, 'Birth')) %>%
+  ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
+                fill = AoA)) + #, color = condition
+  geom_hline(yintercept = 0, lty = 3, size = 0.4) +
+  geom_vline(xintercept = 4, lty = 3, size = 0.4) +
+  stat_summary(fun.y = "mean", geom = "line", size = 1) + 
+  # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
+  stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
+               alpha = 0.5) +
+  geom_point(aes(color = AoA), size = 0.8, show.legend = F) + # , alpha = .1, pch = 5
+  scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
+                     labels = c("-200", "0", "200", "400", "600")) +
+  labs(x = "Time (ms) relative to target syllable offset",
+       y = "Empirical logit of looks to target") +
+  theme_big + legend_adj + labs(fill = "AoA")
+
+
+strucEN_prof <- model_preds$fits_all_strucEN %>%
+  mutate(structure = if_else(structure_sum == 1, "d_n_adj", "n_adj"),
+         structure = fct_relevel(structure, 'd_n_adj'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine'),
+         AoA = if_else(AoA_sum == 1, 'Birth', 'L2'),
+         AoA = fct_relevel(AoA, 'Birth')) %>%
+  ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
+                fill = prof_z)) + #, color = condition
+  geom_hline(yintercept = 0, lty = 3, size = 0.4) +
+  geom_vline(xintercept = 4, lty = 3, size = 0.4) +
+  stat_summary(fun.y = "mean", geom = "line", size = 1) + 
+  # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
+  stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
+               alpha = 0.5) +
+  geom_point(aes(color = prof_z), size = 0.8, show.legend = F) + #, alpha = .1, pch = 5
+  scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
+                     labels = c("-200", "0", "200", "400", "600")) +
+  labs(x = "Time (ms) relative to target syllable offset",
+       y = "Empirical logit of looks to target") +
+  theme_big + legend_adj + labs(fill = "Proficiency") +
+  theme(legend.position = c(0.08, 0.8))
+
+
+strucEN_structure <- model_preds$fits_all_strucEN %>%
+  mutate(structure = if_else(structure_sum == 1, "d_n_adj", "n_adj"),
+         structure = fct_relevel(structure, 'd_n_adj'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine')) %>%
+  ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
+                fill = structure)) + #, color = condition
+  geom_hline(yintercept = 0, lty = 3, size = 0.4) +
+  geom_vline(xintercept = 4, lty = 3, size = 0.4) +
+  stat_summary(fun.y = "mean", geom = "line", size = 1) + 
+  # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
+  stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
+               alpha = 0.5) +
+  geom_point(aes(color = structure), size = 0.8, show.legend = F) +
+  scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
+                     labels = c("-200", "0", "200", "400", "600")) +
+  labs(x = "Time (ms) relative to target syllable offset",
+       y = "Empirical logit of looks to target") +
+  theme_big + legend_adj + labs(fill = "Phrase structure")
+
+
+strucEN_gender <- model_preds$fits_all_strucEN %>%
+  mutate(structure = if_else(structure_sum == 1, "d_n_adj", "n_adj"),
+         structure = fct_relevel(structure, 'd_n_adj'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine')) %>%
+  ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
+                fill = gender)) + #, color = condition
+  geom_hline(yintercept = 0, lty = 3, size = 0.4) +
+  geom_vline(xintercept = 4, lty = 3, size = 0.4) +
+  stat_summary(fun.y = "mean", geom = "line", size = 1) + 
+  # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
+  stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
+               alpha = 0.5) +
+  # geom_smooth(aes(color = gender))
+  geom_point(aes(color = gender), size = 0.8, show.legend = F) +
+  #scale_fill_brewer(palette = 'Set2', name = "Gender") +
+  scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
+                     labels = c("-200", "0", "200", "400", "600")) +
+  labs(x = "Time (ms) relative to target syllable offset",
+       y = "Empirical logit of looks to target") +
+  theme_big + legend_adj + labs(fill = "Gender")
+
+
+strucEN_wm <- model_preds$fits_all_strucEN %>%
+  mutate(structure = if_else(structure_sum == 1, "d_n_adj", "n_adj"),
+         structure = fct_relevel(structure, 'd_n_adj'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine'),
+         AoA = if_else(AoA_sum == 1, 'Birth', 'L2'),
+         AoA = fct_relevel(AoA, 'Birth')) %>%
+  ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
+                fill = wmen_z)) + 
+  geom_hline(yintercept = 0, lty = 3, size = 0.4) +
+  geom_vline(xintercept = 4, lty = 3, size = 0.4) +
+  stat_summary(fun.y = "mean", geom = "line", size = 1) + 
+  # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
+  stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
+               alpha = 0.5) +
+  geom_point(aes(color = wmen_z), size = 0.8, show.legend = F) + #, alpha = .1, pch = 5
+  scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
+                     labels = c("-200", "0", "200", "400", "600")) +
+  labs(x = "Time (ms) relative to target syllable offset",
+       y = "Empirical logit of looks to target") +
+  theme_big + legend_adj + labs(fill = "WM (HS EN)") +
+  theme(legend.position = c(0.08, 0.8))
+
+
+# Phrase structure + wm ES
+
+strucES_AoA <- model_preds$fits_all_strucES %>%
+  mutate(structure = if_else(structure_sum == 1, "d_n_adj", "n_adj"),
+         structure = fct_relevel(structure, 'd_n_adj'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine'),
+         AoA = if_else(AoA_sum == 1, 'Birth', 'L2'),
+         AoA = fct_relevel(AoA, 'Birth')) %>%
+  ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
+                fill = AoA)) + #, color = condition
+  geom_hline(yintercept = 0, lty = 3, size = 0.4) +
+  geom_vline(xintercept = 4, lty = 3, size = 0.4) +
+  stat_summary(fun.y = "mean", geom = "line", size = 1) + 
+  # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
+  stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
+               alpha = 0.5) +
+  geom_point(aes(color = AoA), size = 0.8, show.legend = F) + # , alpha = .1, pch = 5
+  scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
+                     labels = c("-200", "0", "200", "400", "600")) +
+  labs(x = "Time (ms) relative to target syllable offset",
+       y = "Empirical logit of looks to target") +
+  theme_big + legend_adj + labs(fill = "AoA")
+
+
+strucES_prof <- model_preds$fits_all_strucES %>%
+  mutate(structure = if_else(structure_sum == 1, "d_n_adj", "n_adj"),
+         structure = fct_relevel(structure, 'd_n_adj'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine'),
+         AoA = if_else(AoA_sum == 1, 'Birth', 'L2'),
+         AoA = fct_relevel(AoA, 'Birth')) %>%
+  ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
+                fill = prof_z)) + #, color = condition
+  geom_hline(yintercept = 0, lty = 3, size = 0.4) +
+  geom_vline(xintercept = 4, lty = 3, size = 0.4) +
+  stat_summary(fun.y = "mean", geom = "line", size = 1) + 
+  # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
+  stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
+               alpha = 0.5) +
+  geom_point(aes(color = prof_z), size = 0.8, show.legend = F) + #, alpha = .1, pch = 5
+  scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
+                     labels = c("-200", "0", "200", "400", "600")) +
+  labs(x = "Time (ms) relative to target syllable offset",
+       y = "Empirical logit of looks to target") +
+  theme_big + legend_adj + labs(fill = "Proficiency") +
+  theme(legend.position = c(0.08, 0.8))
+
+
+strucES_structure <- model_preds$fits_all_strucES %>%
+  mutate(structure = if_else(structure_sum == 1, "d_n_adj", "n_adj"),
+         structure = fct_relevel(structure, 'd_n_adj'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine')) %>%
+  ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
+                fill = structure)) + #, color = condition
+  geom_hline(yintercept = 0, lty = 3, size = 0.4) +
+  geom_vline(xintercept = 4, lty = 3, size = 0.4) +
+  stat_summary(fun.y = "mean", geom = "line", size = 1) + 
+  # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
+  stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
+               alpha = 0.5) +
+  geom_point(aes(color = structure), size = 0.8, show.legend = F) +
+  scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
+                     labels = c("-200", "0", "200", "400", "600")) +
+  labs(x = "Time (ms) relative to target syllable offset",
+       y = "Empirical logit of looks to target") +
+  theme_big + legend_adj + labs(fill = "Phrase structure")
+
+
+strucES_gender <- model_preds$fits_all_strucES %>%
+  mutate(structure = if_else(structure_sum == 1, "d_n_adj", "n_adj"),
+         structure = fct_relevel(structure, 'd_n_adj'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine')) %>%
+  ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
+                fill = gender)) + #, color = condition
+  geom_hline(yintercept = 0, lty = 3, size = 0.4) +
+  geom_vline(xintercept = 4, lty = 3, size = 0.4) +
+  stat_summary(fun.y = "mean", geom = "line", size = 1) + 
+  # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
+  stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
+               alpha = 0.5) +
+  # geom_smooth(aes(color = gender))
+  geom_point(aes(color = gender), size = 0.8, show.legend = F) +
+  #scale_fill_brewer(palette = 'Set2', name = "Gender") +
+  scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
+                     labels = c("-200", "0", "200", "400", "600")) +
+  labs(x = "Time (ms) relative to target syllable offset",
+       y = "Empirical logit of looks to target") +
+  theme_big + legend_adj + labs(fill = "Gender")
+
+
+strucES_wm <- model_preds$fits_all_strucES %>%
+  mutate(structure = if_else(structure_sum == 1, "d_n_adj", "n_adj"),
+         structure = fct_relevel(structure, 'd_n_adj'),
+         gender = if_else(gender_sum == 1, "masculine", "feminine"),
+         gender = fct_relevel(gender, 'masculine'),
+         AoA = if_else(AoA_sum == 1, 'Birth', 'L2'),
+         AoA = fct_relevel(AoA, 'Birth')) %>%
+  ggplot(., aes(x = time_zero, y = fit, ymax = ymax, ymin = ymin,
+                fill = wmes_z)) + 
+  geom_hline(yintercept = 0, lty = 3, size = 0.4) +
+  geom_vline(xintercept = 4, lty = 3, size = 0.4) +
+  stat_summary(fun.y = "mean", geom = "line", size = 1) + 
+  # geom_ribbon(alpha = 0.2, color = "grey", show.legend = F) +
+  stat_summary(fun.data = mean_cl_boot, geom = 'ribbon',fun.args=list(conf.int=0.95),
+               alpha = 0.5) +
+  geom_point(aes(color = wmes_z), size = 0.8, show.legend = F) + #, alpha = .1, pch = 5
+  scale_x_continuous(breaks = c(-4, 0, 4, 8, 12),
+                     labels = c("-200", "0", "200", "400", "600")) +
+  labs(x = "Time (ms) relative to target syllable offset",
+       y = "Empirical logit of looks to target") +
+  theme_big + legend_adj + labs(fill = "WM (HS ES)") +
+  theme(legend.position = c(0.08, 0.8))
+
+
+
+ggsave(paste0(figs_path, "/transEN_AoA.png"), transEN_AoA, width = 150,
        height = 120, units = "mm", dpi = 600)
-ggsave(paste0(figs_path, "/stress_dele_l1.png"), stress_dele_l1, width = 150,
+ggsave(paste0(figs_path, "/transEN_proficiency.png"), transEN_prof, width = 150,
        height = 120, units = "mm", dpi = 600)
-ggsave(paste0(figs_path, "/stress_dele_cond.png"), stress_dele_cond, width = 150,
+ggsave(paste0(figs_path, "/transEN_transparency.png"), transEN_transparency, width = 150,
        height = 120, units = "mm", dpi = 600)
-ggsave(paste0(figs_path, "/stress_dele_split.png"), stress_dele_split, width = 150,
+ggsave(paste0(figs_path, "/transEN_gender.png"), transEN_gender, width = 150,
        height = 120, units = "mm", dpi = 600)
-ggsave(paste0(figs_path, "/stress_use_l1.png"), stress_use_l1, width = 150,
+ggsave(paste0(figs_path, "/transEN_wm.png"), transEN_wm, width = 150,
        height = 120, units = "mm", dpi = 600)
-ggsave(paste0(figs_path, "/stress_use_cond.png"), stress_use_cond, width = 150,
+
+
+ggsave(paste0(figs_path, "/transES_AoA.png"), transES_AoA, width = 150,
        height = 120, units = "mm", dpi = 600)
-ggsave(paste0(figs_path, "/stress_use_split.png"), stress_use_split, width = 150,
+ggsave(paste0(figs_path, "/transES_proficiency.png"), transES_prof, width = 150,
        height = 120, units = "mm", dpi = 600)
-ggsave(paste0(figs_path, "/stress_wm_l1.png"), stress_wm_l1, width = 150,
+ggsave(paste0(figs_path, "/transES_transaarency.png"), transES_transparency, width = 150,
        height = 120, units = "mm", dpi = 600)
-ggsave(paste0(figs_path, "/stress_wm_cond.png"), stress_wm_cond, width = 150,
+ggsave(paste0(figs_path, "/transES_gender.png"), transES_gender, width = 150,
        height = 120, units = "mm", dpi = 600)
-ggsave(paste0(figs_path, "/stress_wm_split.png"), stress_wm_split, width = 150,
+ggsave(paste0(figs_path, "/transES_wm.png"), transES_wm, width = 150,
+       height = 120, units = "mm", dpi = 600)
+
+
+ggsave(paste0(figs_path, "/strucEN_AoA.png"), strucEN_AoA, width = 150,
+       height = 120, units = "mm", dpi = 600)
+ggsave(paste0(figs_path, "/strucEN_proficiency.png"), strucEN_prof, width = 150,
+       height = 120, units = "mm", dpi = 600)
+ggsave(paste0(figs_path, "/strucEN_structure.png"), strucEN_structure, width = 150,
+       height = 120, units = "mm", dpi = 600)
+ggsave(paste0(figs_path, "/strucEN_gender.png"), strucEN_gender, width = 150,
+       height = 120, units = "mm", dpi = 600)
+ggsave(paste0(figs_path, "/strucEN_wm.png"), strucEN_wm, width = 150,
+       height = 120, units = "mm", dpi = 600)
+
+
+ggsave(paste0(figs_path, "/strucES_AoA.png"), strucES_AoA, width = 150,
+       height = 120, units = "mm", dpi = 600)
+ggsave(paste0(figs_path, "/strucES_proficiency.png"), strucES_prof, width = 150,
+       height = 120, units = "mm", dpi = 600)
+ggsave(paste0(figs_path, "/strucES_structure.png"), strucES_structure, width = 150,
+       height = 120, units = "mm", dpi = 600)
+ggsave(paste0(figs_path, "/strucES_gender.png"), strucES_gender, width = 150,
+       height = 120, units = "mm", dpi = 600)
+ggsave(paste0(figs_path, "/strucES_wm.png"), strucES_wm, width = 150,
        height = 120, units = "mm", dpi = 600)
 
 # -----------------------------------------------------------------------------

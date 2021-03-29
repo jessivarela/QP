@@ -1,3 +1,6 @@
+
+source(here::here("scripts", "00_load_libs.R"))
+
 wm_hs_en <- read.csv(here("data", "raw", 'experiment', 'wm', "wm_hs.xlsx - eng.csv"))
 wm_hs_es <- read.csv(here("data", "raw", 'experiment', 'wm', "wm_hs.xlsx - span.csv"))
 wm_ss_l2 <- read.csv(here("data", "raw", 'demographics', "demographics_ss_l2.csv"))
@@ -22,7 +25,8 @@ wm_hs$group <- 'hs'
 
 wm_df <- rbind(wm_ss_l2, wm_hs) %>% drop_na()
 
-
+write_csv(wm_df, here::here('data', 'clean', 'wm_scores.csv'))
+          
 wm_df %>%
   group_by(., group) %>%
   summarise(min_en = min(engsets_correct),
